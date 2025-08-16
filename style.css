@@ -1,457 +1,198 @@
-   :root {
-            --primary: #4a6fa5;
-            --primary-dark: #3a5a8a;
-            --secondary: #e67e22;
-            --success: #2ecc71;
-            --warning: #f39c12;
-            --danger: #e74c3c;
-            --dark: #1a1a2e;
-            --light: #ecf0f1;
-            --gray: #95a5a6;
-            --border-radius: 12px;
-            --box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  text-decoration: none;
+}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+html {
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  background-color: #121111;
+  font-family: Arial, sans-serif;
+}
 
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #e6e6e6;
-            line-height: 1.6;
-            min-height: 100vh;
-            padding: 20px;
-            overflow-x: hidden;
-        }
+.content-wrapper {
+  padding: 15px;
+}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+.video-container {
+  margin: 5px 0;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
 
-        header {
-            background: rgba(26, 26, 46, 0.8);
-            backdrop-filter: blur(10px);
-            border-radius: var(--border-radius);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            margin-bottom: 2rem;
-            border: 1px solid rgba(74, 111, 165, 0.3);
-        }
+video {
+  width: 100%;
+  height: auto;
+  max-height: 55vh;
+  display: block;
+  object-fit: cover;
+}
 
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
+header h3 {
+  text-align: center;
+  color: darkorange;
+  font-size: 30px;
+  padding: 15px;
+}
 
-        .logo-container i {
-            font-size: 2rem;
-            color: var(--secondary);
-        }
+h3, h5 {
+  color: wheat;
+}
 
-        header h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            background: linear-gradient(to right, #ff9a3c, #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: 12px;
+  background-color: #1e1e1e;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+}
 
-        .timer {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            border: 1px solid rgba(74, 111, 165, 0.3);
-        }
+#authCodeh3 {
+  margin-bottom: 15px;
+}
 
-        main {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-        }
+input[type="number"] {
+  width: 100%;
+  padding: 12px 15px;
+  margin: 10px 0;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background-color: #2a2a2a;
+  color: white;
+}
 
-        section {
-            background: rgba(26, 26, 46, 0.6);
-            backdrop-filter: blur(10px);
-            border-radius: var(--border-radius);
-            padding: 2rem;
-            box-shadow: var(--box-shadow);
-            border: 1px solid rgba(74, 111, 165, 0.2);
-        }
+button {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #4a90e2;
+  color: white;
+  transition: background-color 0.3s;
+}
 
-        h2 {
-            margin-bottom: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.5rem;
-            color: var(--secondary);
-        }
+button:hover:not(:disabled) {
+  background: #357abd;
+}
 
-        h2 i {
-            color: var(--secondary);
-        }
+button:disabled {
+  background: #5a5a5a;
+  cursor: not-allowed;
+}
 
-        h3 {
-            margin-bottom: 1rem;
-            font-size: 1.3rem;
-            color: var(--light);
-        }
+#controlPanel {
+  display: none;
+  margin-top: 20px;
+}
 
-        p {
-            margin-bottom: 1rem;
-            color: #d1d1d1;
-        }
+h5 {
+  color: #ff6b6b;
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #2a1a1a;
+  border-radius: 6px;
+}
 
-        .subtitle {
-            color: var(--gray);
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
+.door-control {
+  background-color: #252525;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+}
 
-        .video-container {
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            box-shadow: var(--box-shadow);
-            margin-top: 1rem;
-        }
+/* POPUP CORRETTI */
+.popup {
+  display: none; /* Solo questa proprietà display */
+  position: fixed;
+  z-index: 1000;
+  left: 0; 
+  top: 0;
+  width: 100%; 
+  height: 100%;
+  background-color: rgba(0,0,0,0.8);
+  align-items: center;
+  justify-content: center;
+}
 
-        video {
-            width: 100%;
-            height: auto;
-            max-height: 500px;
-            display: block;
-            border-radius: var(--border-radius);
-        }
+.popup.active {
+  display: flex;
+}
 
-        .auth-container {
-            background: rgba(40, 44, 64, 0.7);
-            border-radius: var(--border-radius);
-            padding: 2rem;
-            text-align: center;
-            max-width: 500px;
-            margin: 0 auto;
-            border: 1px solid rgba(74, 111, 165, 0.3);
-        }
+.popup-content {
+  background-color: #2d2d2d;
+  padding: 25px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
 
-        .input-group {
-            display: flex;
-            gap: 0.8rem;
-            margin-top: 1rem;
-        }
+.popup h2 {
+  color: darkorange;
+  margin-bottom: 15px;
+}
 
-        input[type="number"] {
-            flex: 1;
-            padding: 0.9rem 1.2rem;
-            font-size: 1rem;
-            border-radius: var(--border-radius);
-            border: 1px solid rgba(74, 111, 165, 0.5);
-            background: rgba(30, 34, 54, 0.8);
-            color: white;
-            transition: var(--transition);
-            outline: none;
-        }
+.popup p {
+  color: #ddd;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
 
-        input[type="number"]:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.3);
-        }
+.popup button {
+  background-color: #4a90e2;
+}
 
-        button {
-            padding: 0.9rem 1.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            border: none;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
+.contact-section {
+  text-align: center;
+  padding: 20px;
+  margin-top: 20px;
+}
 
-        button:hover:not(:disabled) {
-            background: linear-gradient(135deg, var(--primary-dark), #2a4a7a);
-            transform: translateY(-2px);
-        }
+.btn i {
+  font-size: 3rem;
+  color: #25D366;
+  margin-top: 10px;
+}
 
-        button:disabled {
-            background: #4a5568;
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
+.important {
+  padding: 20px;
+  background-color: #2a1a1a;
+  border-radius: 8px;
+  margin: 20px;
+}
 
-        .control-panel {
-            display: none;
-        }
+.important h3 {
+  color: #ff6b6b;
+  margin-bottom: 10px;
+}
 
-        .warning-banner {
-            background-color: rgba(243, 156, 18, 0.15);
-            border-left: 4px solid var(--warning);
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            border-radius: 4px;
-        }
+.important p {
+  color: #ddd;
+  line-height: 1.5;
+}
 
-        .warning-banner i {
-            color: var(--warning);
-            font-size: 1.5rem;
-        }
-
-        .door-controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 1.5rem;
-        }
-
-        .door-card {
-            background: rgba(40, 44, 64, 0.7);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            transition: var(--transition);
-            border: 1px solid rgba(74, 111, 165, 0.3);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .door-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            border-color: rgba(74, 111, 165, 0.6);
-        }
-
-        .click-counter {
-            display: flex;
-            justify-content: space-between;
-            margin: 1rem 0;
-            padding: 0.8rem;
-            background: rgba(30, 34, 54, 0.8);
-            border-radius: var(--border-radius);
-            font-weight: 600;
-        }
-
-        .counter-value {
-            color: var(--secondary);
-            font-weight: bold;
-        }
-
-        .door-button {
-            margin-top: auto;
-            padding: 1rem;
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .important-card {
-            background: rgba(231, 76, 60, 0.15);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            border-left: 4px solid var(--danger);
-        }
-
-        .important-card h3 {
-            color: var(--danger);
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-
-        .contact-section {
-            text-align: center;
-            padding: 1.5rem;
-            background: rgba(40, 44, 64, 0.7);
-            border-radius: var(--border-radius);
-            margin-top: 2rem;
-            border: 1px solid rgba(74, 111, 165, 0.3);
-        }
-
-        .whatsapp-btn {
-            display: inline-block;
-            background: linear-gradient(135deg, #25D366, #128C7E);
-            color: white;
-            padding: 0.8rem 1.5rem;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
-            margin-top: 1rem;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.8rem;
-            max-width: 300px;
-            margin: 1.5rem auto 0;
-        }
-
-        .whatsapp-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
-        }
-
-        .popup {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .popup-content {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            padding: 2rem;
-            border-radius: var(--border-radius);
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(74, 111, 165, 0.5);
-        }
-
-        .popup h2 {
-            color: var(--secondary);
-            margin-bottom: 1rem;
-        }
-
-        .popup p {
-            margin-bottom: 1.5rem;
-            font-size: 1.1rem;
-        }
-
-        .popup button {
-            margin-top: 0.5rem;
-        }
-
-        .log {
-            font-size: 0.9rem;
-            min-height: 20px;
-            margin-top: 1rem;
-            text-align: center;
-            padding: 0.5rem;
-            border-radius: var(--border-radius);
-        }
-
-        .success {
-            color: var(--success);
-            background: rgba(46, 204, 113, 0.1);
-        }
-
-        .error {
-            color: #ff6b6b;
-            background: rgba(231, 76, 60, 0.1);
-        }
-
-        footer {
-            text-align: center;
-            padding-top: 2rem;
-            margin-top: 2rem;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.9rem;
-        }
-
-        .session-expired {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            flex-direction: column;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        @media (max-width: 768px) {
-            section {
-                padding: 1.5rem;
-            }
-            
-            .input-group {
-                flex-direction: column;
-            }
-            
-            header {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-            
-            .door-controls {
-                grid-template-columns: 1fr;
-            }
-            
-            video {
-                max-height: 300px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .auth-container, 
-            .control-panel,
-            .important-section {
-                padding: 1.5rem;
-            }
-            
-            video {
-                max-height: 250px;
-            }
-            
-            h2 {
-                font-size: 1.3rem;
-            }
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-
-        .success-bg {
-            animation: successFlash 1s;
-        }
-
-        .error-bg {
-            animation: errorFlash 1s;
-        }
-
-        @keyframes successFlash {
-            0%, 100% { background: rgba(26, 26, 46, 0.6); }
-            50% { background: rgba(46, 204, 113, 0.3); }
-        }
-
-        @keyframes errorFlash {
-            0%, 100% { background: rgba(26, 26, 46, 0.6); }
-            50% { background: rgba(231, 76, 60, 0.3); }
-        }
+@media (max-width: 768px) {
+  header h3 {
+    font-size: 24px;
+    padding: 10px;
+  }
+  
+  .container {
+    padding: 15px;
+  }
+  
+  .door-control {
+    padding: 10px;
+  }
+}
