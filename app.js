@@ -20,7 +20,7 @@ const MAX_CLICKS = 3;
 const BASE_URL_SET =
   "https://shelly-73-eu.shelly.cloud/v2/devices/api/set/switch";
 const CORRECT_CODE = "2245";
-const TIME_LIMIT_MINUTES = 20; // 1 ora
+const TIME_LIMIT_MINUTES = 2; // 1 ora
 const SECRET_KEY = "musart_secret_123";
 let timeCheckInterval;
 
@@ -117,7 +117,7 @@ function showFatalError(message) {
           top: 0;
           left: 0;
           width: 100%;
-          height: 100%;
+          height: 100vh;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -155,9 +155,9 @@ function updateStatusBar() {
   );
   const secondsLeft = Math.max(0, Math.floor(60 - (minutesPassed % 1) * 60));
 
-  document.getElementById("timeRemaining").textContent = `${minutesLeft
-    .toString()
-    .padStart(2, "0")}:${secondsLeft.toString().padStart(2, "0")}`;
+ // document.getElementById("timeRemaining").textContent = `${minutesLeft
+   // .toString()
+   // .padStart(2, "0")}:${secondsLeft.toString().padStart(2, "0")}`;
 }
 
 // --- Gestione click affidabile ---
