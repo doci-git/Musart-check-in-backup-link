@@ -48,6 +48,14 @@
       position: relative;
       padding-bottom: 10px;
     }
+     .auth-container .hh2{
+      text-align: center;
+      color: var(--orange);
+      margin-bottom: 10px;
+      font-size: 1.4rem;
+      position: relative;
+      padding-bottom: 10px;
+    }
 
     .section-title::after {
       content: '';
