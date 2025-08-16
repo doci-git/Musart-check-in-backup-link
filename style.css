@@ -27,8 +27,8 @@
 
     .container {
       max-width: 1200px;
-      margin: 20px auto;
-      padding: 0 20px;
+      margin: 10px auto;
+      padding: 0 5px;
     }
 
     .section {
@@ -43,7 +43,7 @@
     .section-title {
       text-align: center;
       color: var(--orange);
-      margin-bottom: 20px;
+      margin-bottom: 1px;
       font-size: 1.8rem;
       position: relative;
       padding-bottom: 10px;
@@ -146,7 +146,10 @@
 
     .warning-box h5 {
       color: var(--secondary);
-      font-size: 1rem;
+      font-size: 0.9rem;
+    }
+    .warning-box p {
+      font-size: 0.8rem;
     }
 
     .door-control {
@@ -270,7 +273,7 @@
 
     @media (max-width: 768px) {
       .container {
-        padding: 0 15px;
+        padding: 0 10px;
       }
       
       .section {
@@ -278,7 +281,7 @@
       }
       
       header h1 {
-        font-size: 2rem;
+        font-size: 0.8rem;
       }
       
       .section-title {
