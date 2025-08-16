@@ -359,6 +359,7 @@ async function handleCodeSubmit() {
   document.getElementById("auth-form").style.display = "none";
   document.getElementById("btnCheckCode").style.display = "none";
   document.getElementById("important").style.display = "none";
+  document.getElementById("hh2").style.display = "none";
 
   // Aggiorna lo stato dei pulsanti
   DEVICES.forEach(updateButtonState);
