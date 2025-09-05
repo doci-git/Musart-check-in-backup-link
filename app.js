@@ -1,4 +1,3 @@
-// --- Configurazione ---
 const DEVICES = [
   {
     id: "e4b063f0c38c",
@@ -20,21 +19,18 @@ const MAX_CLICKS = 3;
 const BASE_URL_SET =
   "https://shelly-73-eu.shelly.cloud/v2/devices/api/set/switch";
 const CORRECT_CODE = "2245";
-const TIME_LIMIT_MINUTES = 2; // 1 ora
-const SECRET_KEY = "musart_secret_123";
+const TIME_LIMIT_MINUTES = 900;
+const SECRET_KEY = "musart_secret_123_fixed_key";
 let timeCheckInterval;
 
 // --- Funzioni di storage affidabili ---
 function setStorage(key, value, minutes) {
   try {
-    // Salva in localStorage
     localStorage.setItem(key, value);
-
-    // Salva in cookie come fallback
     const d = new Date();
     d.setTime(d.getTime() + minutes * 60 * 1000);
     const expires = "expires=" + d.toUTCString();
-    document.cookie = `${key}=${value}; ${expires}; path=/; SameSite=Lax`;
+    document.cookie = `${key}=${value}; ${expires}; path=/; SameSite=Strict`;
   } catch (e) {
     console.error("Storage error:", e);
   }
@@ -42,11 +38,9 @@ function setStorage(key, value, minutes) {
 
 function getStorage(key) {
   try {
-    // Prova prima con localStorage
     const localValue = localStorage.getItem(key);
     if (localValue !== null) return localValue;
 
-    // Fallback ai cookie
     const cookies = document.cookie.split(";");
     for (let cookie of cookies) {
       const [name, value] = cookie.trim().split("=");
@@ -56,6 +50,15 @@ function getStorage(key) {
     console.error("Storage read error:", e);
   }
   return null;
+}
+
+function clearStorage(key) {
+  try {
+    localStorage.removeItem(key);
+    document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+  } catch (e) {
+    console.error("Storage clear error:", e);
+  }
 }
 
 // --- Funzioni di sicurezza ---
@@ -75,7 +78,6 @@ async function setUsageStartTime() {
   setStorage("usage_start_time", now, TIME_LIMIT_MINUTES);
   setStorage("usage_hash", hash, TIME_LIMIT_MINUTES);
 
-  // Aggiorna l'interfaccia
   updateStatusBar();
 }
 
@@ -83,12 +85,12 @@ async function checkTimeLimit() {
   const startTime = getStorage("usage_start_time");
   const storedHash = getStorage("usage_hash");
 
+  // Se non c'è un timestamp salvato, non c'è sessione attiva
   if (!startTime || !storedHash) return false;
 
-  // Verifica integrità
   const calcHash = await generateHash(startTime + SECRET_KEY);
   if (calcHash !== storedHash) {
-    showFatalError("⚠️ Security violation detected!");
+    showFatalError("⚠️ Violazione di sicurezza rilevata!");
     return true;
   }
 
@@ -96,56 +98,78 @@ async function checkTimeLimit() {
   const minutesPassed = (now - parseInt(startTime, 10)) / (1000 * 60);
 
   if (minutesPassed >= TIME_LIMIT_MINUTES) {
-    showFatalError("⏰ Session expired! Please request a new code.");
+    showSessionExpired();
     return true;
   }
 
-  // Aggiorna l'interfaccia
   updateStatusBar();
-
   return false;
 }
 
 function showFatalError(message) {
-  // Rimuovi eventuali intervalli
+  clearInterval(timeCheckInterval);
+  document.body.innerHTML = `
+                <div style="
+                  position: fixed;
+                  top: 0;
+                  left: 0;
+                  width: 100%;
+                  height: 100vh;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  background: #121111;
+                  color: #ff6b6b;
+                  font-size: 24px;
+                  text-align: center;
+                  padding: 20px;
+                  z-index: 9999;
+                ">
+                  ${message}
+                </div>
+              `;
+}
+
+function showSessionExpired() {
   clearInterval(timeCheckInterval);
 
-  // Mostra messaggio di errore
-  document.body.innerHTML = `
-        <div style="
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100vh;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          background: #121111;
-          color: #ff6b6b;
-          font-size: 24px;
-          text-align: center;
-          padding: 20px;
-          z-index: 9999;
-        ">
-          ${message}
-        </div>
-      `;
+  // Mostra overlay a schermo intero
+  document.getElementById("expiredOverlay").classList.remove("hidden");
+
+  // Nascondi pannello di controllo e mostra messaggio di sessione scaduta
+  document.getElementById("controlPanel").classList.add("hidden");
+  document.getElementById("sessionExpired").classList.remove("hidden");
+
+  // Disabilita tutti i pulsanti
+  DEVICES.forEach((device) => {
+    const btn = document.getElementById(device.button_id);
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add("btn-error");
+    }
+  });
 }
 
 // --- Aggiorna la barra di stato ---
 function updateStatusBar() {
-  // Aggiorna i click rimanenti
-  document.getElementById("mainDoorClicks").textContent = getClicksLeft(
-    DEVICES[0].storage_key
-  );
-  document.getElementById("aptDoorClicks").textContent = getClicksLeft(
-    DEVICES[1].storage_key
-  );
+  // Aggiorna i contatori visivi se gli elementi esistono
+  const mainDoorCounter = document.getElementById("mainDoorCounter");
+  const aptDoorCounter = document.getElementById("aptDoorCounter");
+  const timeRemaining = document.getElementById("timeRemaining");
 
-  // Aggiorna il tempo rimanente
+  if (mainDoorCounter) {
+    mainDoorCounter.textContent = `${getClicksLeft(
+      DEVICES[0].storage_key
+    )} click left`;
+  }
+  if (aptDoorCounter) {
+    aptDoorCounter.textContent = `${getClicksLeft(
+      DEVICES[1].storage_key
+    )} click left`;
+  }
+
   const startTime = getStorage("usage_start_time");
-  if (!startTime) return;
+  if (!startTime || !timeRemaining) return;
 
   const now = Date.now();
   const minutesPassed = (now - parseInt(startTime, 10)) / (1000 * 60);
@@ -155,9 +179,18 @@ function updateStatusBar() {
   );
   const secondsLeft = Math.max(0, Math.floor(60 - (minutesPassed % 1) * 60));
 
- // document.getElementById("timeRemaining").textContent = `${minutesLeft
-   // .toString()
-   // .padStart(2, "0")}:${secondsLeft.toString().padStart(2, "0")}`;
+  timeRemaining.textContent = `${minutesLeft
+    .toString()
+    .padStart(2, "0")}:${secondsLeft.toString().padStart(2, "0")}`;
+
+  // Cambia colore in base al tempo rimanente
+  if (minutesLeft < 1) {
+    timeRemaining.style.color = "var(--error)";
+  } else if (minutesLeft < 5) {
+    timeRemaining.style.color = "var(--warning)";
+  } else {
+    timeRemaining.style.color = "var(--primary)";
+  }
 }
 
 // --- Gestione click affidabile ---
@@ -168,7 +201,7 @@ function getClicksLeft(key) {
 
 function setClicksLeft(key, count) {
   setStorage(key, count.toString(), TIME_LIMIT_MINUTES);
-  updateStatusBar(); // Aggiorna l'interfaccia
+  updateStatusBar();
 }
 
 function updateButtonState(device) {
@@ -177,6 +210,15 @@ function updateButtonState(device) {
 
   const clicksLeft = getClicksLeft(device.storage_key);
   btn.disabled = clicksLeft <= 0;
+
+  // Aggiorna stile in base allo stato
+  if (clicksLeft <= 0) {
+    btn.classList.add("btn-error");
+    btn.classList.remove("btn-success");
+  } else {
+    btn.classList.add("btn-success");
+    btn.classList.remove("btn-error");
+  }
 }
 
 // --- Gestione popup corretta ---
@@ -189,24 +231,21 @@ function showDevicePopup(device, clicksLeft) {
   if (text) {
     if (clicksLeft > 0) {
       text.innerHTML = `
-            <i class="fas fa-check-circle" style="color: #4CAF50; font-size: 2.5rem; margin-bottom: 15px;"></i>
-            <div>You have <strong>${clicksLeft}</strong> remaining click${
-        clicksLeft !== 1 ? "s" : ""
-      }</div>
-            <div style="margin-top: 10px; font-size: 1rem;">The door has been unlocked!</div>
-          `;
+                    <i class="fas fa-check-circle" style="color: #4CAF50; font-size: 2.5rem; margin-bottom: 15px;"></i>
+                    <div><strong>${clicksLeft}</strong> Click Left</div>
+                    <div style="margin-top: 10px; font-size: 1rem;"> Door Unlocked!</div>
+                  `;
     } else {
       text.innerHTML = `
-            <i class="fas fa-exclamation-triangle" style="color: #FFC107; font-size: 2.5rem; margin-bottom: 15px;"></i>
-            <div><strong>No clicks remaining!</strong></div>
-            <div style="margin-top: 10px; font-size: 1rem;">Please contact us for assistance.</div>
-          `;
+                    <i class="fas fa-exclamation-triangle" style="color: #FFC107; font-size: 2.5rem; margin-bottom: 15px;"></i>
+                    <div><strong> No more cliks left!</strong></div>
+                    <div style="margin-top: 10px; font-size: 1rem;"> Contact for Assistance.</div>
+                  `;
     }
   }
 
   popup.style.display = "flex";
 
-  // Chiudi automaticamente dopo 3 secondi se ci sono ancora click disponibili
   if (clicksLeft > 0) {
     setTimeout(() => {
       closePopup(device.button_id);
@@ -221,6 +260,12 @@ function closePopup(buttonId) {
 
 // --- Attivazione dispositivo con gestione errori ---
 async function activateDevice(device) {
+  // Controlla se è il primo click e imposta il tempo iniziale
+  const startTime = getStorage("usage_start_time");
+  if (!startTime) {
+    await setUsageStartTime();
+  }
+
   if (await checkTimeLimit()) return;
 
   let clicksLeft = getClicksLeft(device.storage_key);
@@ -247,24 +292,21 @@ async function activateDevice(device) {
       }),
     });
 
-    // Gestione della risposta
     if (response.ok) {
       showDevicePopup(device, clicksLeft);
     } else {
-      // Ripristina il click in caso di errore
       setClicksLeft(device.storage_key, clicksLeft + 1);
       updateButtonState(device);
 
-      // Mostra messaggio di errore
       const popup = document.getElementById(`popup-${device.button_id}`);
       if (popup) {
         const text = document.getElementById(`popup-text-${device.button_id}`);
         if (text) {
           text.innerHTML = `
-                <i class="fas fa-times-circle" style="color: #f44336; font-size: 2.5rem; margin-bottom: 15px;"></i>
-                <div><strong>Error activating device!</strong></div>
-                <div style="margin-top: 10px; font-size: 1rem;">Please try again or contact support.</div>
-              `;
+                        <i class="fas fa-times-circle" style="color: #f44336; font-size: 2.5rem; margin-bottom: 15px;"></i>
+                        <div><strong>Errore nell'attivazione!</strong></div>
+                        <div style="margin-top: 10px; font-size: 1rem;">Riprova o contatta l'assistenza.</div>
+                      `;
         }
         popup.style.display = "flex";
       }
@@ -272,20 +314,18 @@ async function activateDevice(device) {
   } catch (error) {
     console.error("Device activation failed:", error);
 
-    // Ripristina il click in caso di errore
     setClicksLeft(device.storage_key, clicksLeft + 1);
     updateButtonState(device);
 
-    // Mostra messaggio di errore
     const popup = document.getElementById(`popup-${device.button_id}`);
     if (popup) {
       const text = document.getElementById(`popup-text-${device.button_id}`);
       if (text) {
         text.innerHTML = `
-              <i class="fas fa-times-circle" style="color: #f44336; font-size: 2.5rem; margin-bottom: 15px;"></i>
-              <div><strong>Connection error!</strong></div>
-              <div style="margin-top: 10px; font-size: 1rem;">Please check your internet connection.</div>
-            `;
+                      <i class="fas fa-times-circle" style="color: #f44336; font-size: 2.5rem; margin-bottom: 15px;"></i>
+                      <div><strong>Errore di connessione!</strong></div>
+                      <div style="margin-top: 10px; font-size: 1rem;">Controlla la tua connessione internet.</div>
+                    `;
       }
       popup.style.display = "flex";
     }
@@ -318,42 +358,48 @@ function init() {
     });
   });
 
+  // Controllo stato iniziale - MODIFICATO per mantenere lo stato dopo refresh
+  const startTime = getStorage("usage_start_time");
+  const authValid = getStorage("auth_valid");
+
+  // Se c'è una sessione attiva O l'utente era autenticato, mostra il pannello
+  if (startTime || authValid === "true") {
+    document.getElementById("controlPanel").style.display = "block";
+    document.getElementById("authCode").style.display = "none";
+    document.getElementById("auth-form").style.display = "none";
+    document.getElementById("btnCheckCode").style.display = "none";
+    document.getElementById("important").style.display = "none";
+    document.getElementById("hh2").style.display = "none";
+
+    DEVICES.forEach(updateButtonState);
+    updateStatusBar();
+  }
+
   // Controllo tempo iniziale
   checkTimeLimit().then((expired) => {
     if (expired) return;
-
-    // Aggiorna stato pulsanti se il pannello è visibile
-    if (document.getElementById("controlPanel").style.display === "block") {
-      DEVICES.forEach(updateButtonState);
-      updateStatusBar();
-    }
   });
 
   // Controllo periodico del tempo
   timeCheckInterval = setInterval(() => {
     checkTimeLimit();
-  }, 10000);
+  }, 1000);
 
   // Blocca il menu contestuale
   document.addEventListener("contextmenu", (e) => e.preventDefault());
-
-  // Aggiorna la barra di stato iniziale
-  updateStatusBar();
 }
 
 // --- Gestione codice di accesso ---
 async function handleCodeSubmit() {
   const insertedCode = document.getElementById("authCode").value.trim();
   if (insertedCode !== CORRECT_CODE) {
-    alert("Incorrect code! Please try again.");
+    alert("Codice errato! Riprova.");
     return;
   }
 
-  await setUsageStartTime();
+  // Salva il flag di autenticazione valida
+  setStorage("auth_valid", "true", TIME_LIMIT_MINUTES);
 
-  if (await checkTimeLimit()) return;
-
-  // Mostra il pannello di controllo
   document.getElementById("controlPanel").style.display = "block";
   document.getElementById("authCode").style.display = "none";
   document.getElementById("auth-form").style.display = "none";
@@ -361,7 +407,6 @@ async function handleCodeSubmit() {
   document.getElementById("important").style.display = "none";
   document.getElementById("hh2").style.display = "none";
 
-  // Aggiorna lo stato dei pulsanti
   DEVICES.forEach(updateButtonState);
   updateStatusBar();
 }

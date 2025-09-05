@@ -8,13 +8,26 @@
  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    
+
+  <div id="expiredOverlay" class="expired-overlay hidden">
+    <i class="fas fa-shield-alt" style="font-size: 4rem; margin-bottom: 20px;"></i>
+    <h2>Access Expired</h2>
+    <p>The security session has expired. Access has been disabled. <BR>404 error</BR></p>
+    
+    <a class="btn btn-error" href="https://api.whatsapp.com/send?phone=+393898883634&text=Hi, I need assistance ">
+      <i class="fab fa-whatsapp"></i> Need Assistance
+    </a>
+  </div>
  
-  <div class="container">
-    <div class="section fade-in">
+  <div class="container" id="test2">
+    <div class="section1 fade-in">
       <h2 class="section-title">MusArt <br>Check-in Information</h2>
-      <!-- <p style="text-align: center; margin-bottom: 20px; color: wheat;">
-        Follow these steps for a smooth check-in process
-      </p> -->
+      
+      <!-- <div class="security-notice">
+         <h5><i class="fa-solid fa-door-open"></i>  MusArt check-in</h5>
+        <p>All steps you need to follow for a smooth check-in!</p>
+      </div> --> 
       
       <div class="video-container">
         <video controls onloadstart="this.volume=0.1">
@@ -30,7 +43,7 @@
         
         <div class="auth-form" id="auth-form">
           <div class="input-group">
-            <input type="number" id="authCode" placeholder="Enter the access code we sent you">
+            <input type="number" id="authCode" placeholder="Enter the access code we sent you" inputmode="numeric" pattern="[0-9]*">
           </div>
           <button id="btnCheckCode" class="btn pulse">
             <i class="fas fa-unlock-alt"></i> Submit Code
@@ -38,10 +51,7 @@
         </div>
         
         <div id="controlPanel" class="control-panel">
-          <div class="warning-box" id="warning-box">
-            <h5><i class="fas fa-exclamation-triangle"></i> IMPORTANT: You only have 3 clicks</h5>
-            <p>Use the buttons only for check-in</p>
-          </div>
+        
           
           <div class="door-control fade-in">
             <h3><i class="fas fa-building"></i> Main Entrance Door</h3>
@@ -56,21 +66,34 @@
               <i class="fas fa-key"></i> Unlock Apartment Door
             </button>
           </div>
-          
-          <div class="status-bar">
-            <div class="status-item">
-              <div>Main Door Clicks</div>
-              <div id="mainDoorClicks" class="status-value">3</div>
-            </div>
-            <div class="status-item">
-              <div>Apartment Door Clicks</div>
-              <div id="aptDoorClicks" class="status-value">3</div>
-            </div>
-            <div class="status-item">
-              <div>Link expires in 24 hours</div>
-              <!-- <div id="timeRemaining" class="status-value">60:00</div> -->
-            </div>
+          <br>
+            <div class="warning-box" id="warning-box">
+            <h5><i class="fas fa-exclamation-triangle"></i> Limited Access</h5>
+                      <p>
+            Each button can be used a maximum of <strong>2 times</strong>.  
+            Please use it only for check-in. <br>  <br>
+            Access will automatically expire 12 hours after the first click.
+          </p>
           </div>
+          
+          <!-- <div class="status-bar">
+            <div class="status-item">
+              <div>Tempo rimanente</div>
+              <div id="timeRemaining" class="status-value">02:00</div>
+            </div>
+            <div class="status-item">
+              <div>Stato sicurezza</div>
+              <div id="securityStatus" class="status-value">Attiva</div>
+            </div>
+          </div> -->
+        </div>
+        
+        <div id="sessionExpired" class="session-expired hidden">
+          <h3><i class="fas fa-clock"></i> Sessione Scaduta</h3>
+          <p>L'accesso è stato disattivato per motivi di sicurezza. Per sbloccare nuovamente le porte, richiedi un nuovo codice di accesso.</p>
+          <a class="btn btn-error" href="https://api.whatsapp.com/send?phone=+393898883634&text=Hi, I need a new access code">
+            <i class="fab fa-whatsapp"></i> Richiedi Assistenza
+          </a>
         </div>
       </div>
     </div>
@@ -99,8 +122,7 @@
     <div class="section important fade-in" id="important">
       <h3><i class="fas fa-exclamation-circle"></i> IMPORTANT LEGAL REQUIREMENT</h3>
       <p>
-        Before sending the access code, according to Italian law, I must register all guests on the official tourist portal. 
-        Please send me photos of everyone's passports via Airbnb/Booking messaging or WhatsApp.
+       Before sending the access code, according to Italian law, I must register all guests on the official tourist portal. Please send me photos of everyone's passports via Airbnb/Booking messaging or WhatsApp.
       </p>
     </div>
 
@@ -112,6 +134,7 @@
       </a>
     </div>
   </div>
+
 <script src="app.js"></script>
 </body>
 </html>
