@@ -639,3 +639,42 @@ input[type="password"]:focus {
     padding: 20px;
   }
 }
+
+/* Aggiungi questi stili al tuo file CSS */
+.admin-section .input-group a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.admin-section .input-group a:hover {
+    text-decoration: underline;
+}
+
+#recentLinksList {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+#recentLinksList div {
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid var(--primary);
+}
+
+#recentLinksList button {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+#recentLinksList button:hover {
+    text-decoration: underline;
+}

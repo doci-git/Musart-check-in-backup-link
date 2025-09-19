@@ -411,6 +411,194 @@
       </div>-->
     </div>
 
-    <script src="app.js?v=2.0"></script>
+    <script src="app.js?v=2.0">
+      
+// Funzione per verificare e gestire i token
+function handleSecureToken() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    
+    if (!token) return false;
+    
+    // Verifica il token
+    const isValid = validateSecureToken(token);
+    
+    if (isValid.valid) {
+        // Token valido, compila automaticamente il codice
+        const authCodeInput = document.getElementById('authCode');
+        if (authCodeInput) {
+            // Usa il codice segreto corrente
+            const currentCode = localStorage.getItem('secret_code') || '2245';
+            authCodeInput.value = currentCode;
+            
+            // Mostra notifica
+            showTokenNotification(isValid.remainingUses);
+            
+            // Incrementa il contatore di utilizzi
+            incrementTokenUsage(token);
+            
+            // Pulisci l'URL
+            cleanUrl();
+            
+            return true;
+        }
+    } else {
+        // Token non valido
+        showTokenError(isValid.reason);
+        cleanUrl();
+    }
+    
+    return false;
+}
+
+// Verifica la validità del token
+function validateSecureToken(token) {
+    try {
+        const secureLinks = JSON.parse(localStorage.getItem('secure_links') || '{}');
+        const linkData = secureLinks[token];
+        
+        if (!linkData) {
+            return { valid: false, reason: 'Token non valido' };
+        }
+        
+        if (linkData.status !== 'active') {
+            return { valid: false, reason: 'Token revocato' };
+        }
+        
+        if (linkData.expiration < Date.now()) {
+            return { valid: false, reason: 'Token scaduto' };
+        }
+        
+        if (linkData.usedCount >= linkData.maxUsage) {
+            return { valid: false, reason: 'Utilizzi esauriti' };
+        }
+        
+        const remainingUses = linkData.maxUsage - linkData.usedCount;
+        return { valid: true, remainingUses: remainingUses };
+        
+    } catch (error) {
+        return { valid: false, reason: 'Errore di verifica' };
+    }
+}
+
+// Incrementa il contatore di utilizzi
+function incrementTokenUsage(token) {
+    const secureLinks = JSON.parse(localStorage.getItem('secure_links') || '{}');
+    
+    if (secureLinks[token]) {
+        secureLinks[token].usedCount++;
+        
+        // Se raggiunge il massimo, marca come utilizzato
+        if (secureLinks[token].usedCount >= secureLinks[token].maxUsage) {
+            secureLinks[token].status = 'used';
+        }
+        
+        localStorage.setItem('secure_links', JSON.stringify(secureLinks));
+    }
+}
+
+// Mostra notifica di token valido
+function showTokenNotification(remainingUses) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--success);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        max-width: 300px;
+    `;
+    
+    notification.innerHTML = `
+        <i class="fas fa-check-circle"></i>
+        <div>
+            <div>Accesso autorizzato tramite link sicuro</div>
+            <div style="font-size: 12px; opacity: 0.9;">Utilizzi rimanenti: ${remainingUses}</div>
+        </div>
+        <button onclick="this.parentElement.remove()" style="
+            background: none;
+            border: none;
+            color: white;
+            margin-left: 10px;
+            cursor: pointer;
+        ">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Mostra errore token
+function showTokenError(reason) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--error);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        max-width: 300px;
+    `;
+    
+    notification.innerHTML = `
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+            <div>Link non valido</div>
+            <div style="font-size: 12px; opacity: 0.9;">Motivo: ${reason}</div>
+        </div>
+        <button onclick="this.parentElement.remove()" style="
+            background: none;
+            border: none;
+            color: white;
+            margin-left: 10px;
+            cursor: pointer;
+        ">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+function cleanUrl() {
+    if (window.history.replaceState) {
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+    }
+}
+
+// Gestisci il token al caricamento della pagina
+document.addEventListener('DOMContentLoaded', function() {
+    handleSecureToken();
+});
+
+    </script>
   </body>
 </html>

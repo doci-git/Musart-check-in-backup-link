@@ -16,7 +16,8 @@
       rel="stylesheet"
     />
   </head>
- <body>
+  <body>
+   <body>
     <div id="loginModal" class="login-modal">
         <div class="login-container">
             <h2><i class="fas fa-lock"></i> Accesso Amministratore</h2>
@@ -46,7 +47,7 @@
                 <h3><i class="fas fa-key"></i> Gestione Codice Segreto</h3>
                 <div class="input-group">
                     <label for="currentCode">Codice attuale</label>
-                    <input type="text" id="currentCode" readonly class="a12">
+                    <input type="text" id="currentCode" readonly>
                 </div>
                 <div class="input-group">
                     <label for="newCode">Nuovo codice</label>
@@ -61,16 +62,16 @@
                 <h3><i class="fas fa-sliders-h"></i> Impostazioni Sistema</h3>
                 <div class="input-group">
                     <label for="currentMaxClicks">Click massimi consentiti</label>
-                    <input type="number" id="currentMaxClicks" readonly class="a12">
+                    <input type="number" id="currentMaxClicks" readonly>
                 </div>
                 <div class="input-group">
-                    <label for="newMaxClicks">Nuovo numero de click massimi</label>
+                    <label for="newMaxClicks">Nuovo numero di click massimi</label>
                     <input type="number" id="newMaxClicks" placeholder="Inserisci nuovo limite" min="1">
                 </div>
 
                 <div class="input-group">
                     <label for="currentTimeLimit">Tempo limite sessione (minuti)</label>
-                    <input type="number" id="currentTimeLimit" readonly class="a12">
+                    <input type="number" id="currentTimeLimit" readonly>
                 </div>
                 <div class="input-group">
                     <label for="newTimeLimit">Nuovo tempo limite (minuti)</label>
@@ -86,7 +87,7 @@
                 <h3><i class="fas fa-clock"></i> Impostazioni Orario Check-in</h3>
                 <div class="input-group">
                     <label for="currentCheckinTimeRange">Range orario attuale</label>
-                    <input type="text" id="currentCheckinTimeRange" readonly class="a12">
+                    <input type="text" id="currentCheckinTimeRange" readonly>
                 </div>
 
                 <div class="time-range-inputs">
@@ -136,9 +137,77 @@
                     <i class="fas fa-check"></i> Applica Visibilità
                 </button>
             </div>
+
+            <div class="admin-section">
+                <h3><i class="fas fa-link"></i> Generazione Link con Scadenza</h3>
+                
+                <div class="input-group">
+                    <label for="linkExpiration">Scadenza del link</label>
+                    <select id="linkExpiration" class="login-input">
+                        <option value="1">1 ora</option>
+                        <option value="3">3 ore</option>
+                        <option value="6">6 ore</option>
+                        <option value="12">12 ore</option>
+                        <option value="24" selected>24 ore</option>
+                        <option value="48">48 ore</option>
+                        <option value="72">72 ore</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="linkUsage">Utilizzi massimi</label>
+                    <input type="number" id="linkUsage" value="1" min="1" max="10" class="login-input">
+                </div>
+                
+                <div class="input-group">
+                    <label for="generatedSecureLink">Link sicuro generato</label>
+                    <input type="text" id="generatedSecureLink" readonly placeholder="Il link apparirà qui">
+                </div>
+                
+                <button id="btnGenerateSecureLink" class="btn">
+                    <i class="fas fa-shield-alt"></i> Genera Link Sicuro
+                </button>
+                
+                <button id="btnCopySecureLink" class="btn btn-secondary" style="margin-left: 10px;">
+                    <i class="fas fa-copy"></i> Copia Link
+                </button>
+                
+                <div class="input-group" style="margin-top: 20px;">
+                    <label>Link attivi:</label>
+                    <div id="activeLinksList" style="background: white; padding: 10px; border-radius: 8px; max-height: 200px; overflow-y: auto;">
+                        <!-- I link attivi appariranno qui -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-section" style="display: none;">
+                <h3><i class="fas fa-chart-bar"></i> Statistiche Link</h3>
+                
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-number" id="totalLinks">0</div>
+                        <div class="stat-label">Link totali generati</div>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <div class="stat-number" id="activeLinks">0</div>
+                        <div class="stat-label">Link attivi</div>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <div class="stat-number" id="usedLinks">0</div>
+                        <div class="stat-label">Link utilizzati</div>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <div class="stat-number" id="expiredLinks">0</div>
+                        <div class="stat-label">Link scaduti/revocati</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-   <script src="admin.js?v=2.0"></script>
-</body>
+    <script src="admin.js?v=2.0"></script>
+  </body>
 </html>

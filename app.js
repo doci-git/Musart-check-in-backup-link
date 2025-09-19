@@ -32,6 +32,124 @@ const DEVICES = [
   },
 ];
 
+
+// Variabile globale per il controllo dei link
+let CODE_CHECK_INTERVAL;
+let LINK_CHECK_INTERVAL;
+
+function setupCodeChangeListener() {
+    // Controlla periodicamente se il codice è cambiato
+    CODE_CHECK_INTERVAL = setInterval(() => {
+        checkCodeVersion();
+    }, 2000);
+    
+    // Controlla periodicamente i link scaduti
+    LINK_CHECK_INTERVAL = setInterval(() => {
+        checkExpiredLinks();
+    }, 60000);
+    
+    // Ascolta anche gli eventi di storage (per cambiamenti tra tab)
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'code_version' || e.key === 'last_code_update') {
+            checkCodeVersion();
+        }
+    });
+}
+
+function checkCodeVersion() {
+    const savedVersion = parseInt(localStorage.getItem('code_version')) || 1;
+    if (savedVersion > currentCodeVersion) {
+        // Il codice è cambiato, resetta tutto
+        currentCodeVersion = savedVersion;
+        CORRECT_CODE = localStorage.getItem("secret_code") || "2245";
+        
+        clearStorage("usage_start_time");
+        clearStorage("usage_hash");
+        DEVICES.forEach((device) => {
+            clearStorage(device.storage_key);
+        });
+
+        document.getElementById("controlPanel").style.display = "none";
+        document.getElementById("authCode").style.display = "block";
+        document.getElementById("auth-form").style.display = "block";
+        document.getElementById("btnCheckCode").style.display = "block";
+        document.getElementById("important").style.display = "block";
+        
+        // Mostra una notifica
+        showNotification("Il codice di accesso è stato aggiornato. Inserisci il nuovo codice.");
+    }
+}
+
+function checkExpiredLinks() {
+    const secureLinks = JSON.parse(localStorage.getItem('secure_links') || '{}');
+    let updated = false;
+    
+    Object.keys(secureLinks).forEach(linkId => {
+        const link = secureLinks[linkId];
+        if (link.expiration < Date.now() && link.status === 'active') {
+            secureLinks[linkId].status = 'expired';
+            updated = true;
+        }
+    });
+    
+    if (updated) {
+        localStorage.setItem('secure_links', JSON.stringify(secureLinks));
+    }
+}
+
+function showNotification(message) {
+    // Rimuovi notifiche precedenti
+    const existingNotification = document.getElementById('codeChangeNotification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    // Crea una nuova notifica
+    const notification = document.createElement('div');
+    notification.id = 'codeChangeNotification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #FF5A5F;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    `;
+    
+    notification.innerHTML = `
+        <i class="fas fa-info-circle"></i>
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" style="background:none; border:none; color:white; margin-left:10px; cursor:pointer;">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Rimuovi automaticamente dopo 5 secondi
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Pulisci gli intervalli quando la pagina viene chiusa
+window.addEventListener('beforeunload', function() {
+    if (CODE_CHECK_INTERVAL) {
+        clearInterval(CODE_CHECK_INTERVAL);
+    }
+    if (LINK_CHECK_INTERVAL) {
+        clearInterval(LINK_CHECK_INTERVAL);
+    }
+});
+
 // Configurazioni con valori di default
 let MAX_CLICKS = parseInt(localStorage.getItem("max_clicks")) || 3;
 let TIME_LIMIT_MINUTES =
@@ -703,6 +821,7 @@ async function init() {
   document.addEventListener("contextmenu", (e) => e.preventDefault());
 
   updateCheckinTimeDisplay();
+    setupCodeChangeListener();
 }
 
 // =============================================
