@@ -1,1 +1,735 @@
-const _0x456fbc=_0x2066;(function(_0x131a71,_0x340d93){const _0x48ed8f=_0x2066,_0x572424=_0x131a71();while(!![]){try{const _0x1639c4=parseInt(_0x48ed8f(0x1fa))/0x1*(parseInt(_0x48ed8f(0x1f8))/0x2)+-parseInt(_0x48ed8f(0x20c))/0x3*(parseInt(_0x48ed8f(0x229))/0x4)+-parseInt(_0x48ed8f(0x22a))/0x5+-parseInt(_0x48ed8f(0x23b))/0x6*(parseInt(_0x48ed8f(0x21b))/0x7)+-parseInt(_0x48ed8f(0x21e))/0x8*(-parseInt(_0x48ed8f(0x215))/0x9)+-parseInt(_0x48ed8f(0x214))/0xa*(-parseInt(_0x48ed8f(0x1f2))/0xb)+parseInt(_0x48ed8f(0x24b))/0xc*(parseInt(_0x48ed8f(0x1fe))/0xd);if(_0x1639c4===_0x340d93)break;else _0x572424['push'](_0x572424['shift']());}catch(_0x575362){_0x572424['push'](_0x572424['shift']());}}}(_0x46ba,0xd2f0f));const _0x45aaa8=(function(){let _0x964ed5=!![];return function(_0x33e463,_0x3db0c1){const _0x4c690d=_0x964ed5?function(){const _0x86cdfe=_0x2066;if(_0x3db0c1){const _0x3e2315=_0x3db0c1[_0x86cdfe(0x254)](_0x33e463,arguments);return _0x3db0c1=null,_0x3e2315;}}:function(){};return _0x964ed5=![],_0x4c690d;};}()),_0x110925=_0x45aaa8(this,function(){const _0x3d49c9=_0x2066;return _0x110925[_0x3d49c9(0x1ee)]()[_0x3d49c9(0x23a)](_0x3d49c9(0x1ed))['toString']()['constructor'](_0x110925)[_0x3d49c9(0x23a)](_0x3d49c9(0x1ed));});_0x110925();function _0x2066(_0x41cc0e,_0x1e2a58){const _0x32091d=_0x46ba();return _0x2066=function(_0x23be0e,_0x3bb5a1){_0x23be0e=_0x23be0e-0x1e2;let _0x2bbf94=_0x32091d[_0x23be0e];return _0x2bbf94;},_0x2066(_0x41cc0e,_0x1e2a58);}const _0x3bb5a1=(function(){let _0x47fd80=!![];return function(_0x158780,_0x1251f8){const _0x8da8d2=_0x47fd80?function(){if(_0x1251f8){const _0xd50a17=_0x1251f8['apply'](_0x158780,arguments);return _0x1251f8=null,_0xd50a17;}}:function(){};return _0x47fd80=![],_0x8da8d2;};}()),_0x23be0e=_0x3bb5a1(this,function(){const _0x383fc7=_0x2066;let _0x31f7a4;try{const _0x60b7f5=Function(_0x383fc7(0x1f7)+_0x383fc7(0x1fb)+');');_0x31f7a4=_0x60b7f5();}catch(_0x2057b1){_0x31f7a4=window;}const _0x51aaa3=_0x31f7a4['console']=_0x31f7a4[_0x383fc7(0x23f)]||{},_0x1fba97=[_0x383fc7(0x202),_0x383fc7(0x1e5),'info',_0x383fc7(0x1e8),_0x383fc7(0x222),_0x383fc7(0x255),_0x383fc7(0x228)];for(let _0xce334d=0x0;_0xce334d<_0x1fba97['length'];_0xce334d++){const _0x2d353f=_0x3bb5a1[_0x383fc7(0x216)][_0x383fc7(0x218)][_0x383fc7(0x201)](_0x3bb5a1),_0x5eb727=_0x1fba97[_0xce334d],_0x102535=_0x51aaa3[_0x5eb727]||_0x2d353f;_0x2d353f[_0x383fc7(0x22e)]=_0x3bb5a1[_0x383fc7(0x201)](_0x3bb5a1),_0x2d353f[_0x383fc7(0x1ee)]=_0x102535['toString']['bind'](_0x102535),_0x51aaa3[_0x5eb727]=_0x2d353f;}});_0x23be0e();const DEVICES=[{'id':'e4b063f0c38c','auth_key':_0x456fbc(0x236),'storage_key':'clicks_MainDoor','button_id':_0x456fbc(0x248)},{'id':_0x456fbc(0x1e4),'auth_key':_0x456fbc(0x236),'storage_key':_0x456fbc(0x220),'button_id':_0x456fbc(0x252)}],MAX_CLICKS=0x3,BASE_URL_SET=_0x456fbc(0x24d),CORRECT_CODE=_0x456fbc(0x24e),TIME_LIMIT_MINUTES=0x384,SECRET_KEY=_0x456fbc(0x233);let timeCheckInterval;function setStorage(_0x3d261b,_0x202dbe,_0x5d9756){const _0x2a5640=_0x456fbc;try{localStorage[_0x2a5640(0x1f9)](_0x3d261b,_0x202dbe);const _0x5b1e30=new Date();_0x5b1e30[_0x2a5640(0x1e7)](_0x5b1e30['getTime']()+_0x5d9756*0x3c*0x3e8);const _0x31b0ea=_0x2a5640(0x22d)+_0x5b1e30[_0x2a5640(0x253)]();document[_0x2a5640(0x250)]=_0x3d261b+'='+_0x202dbe+';\x20'+_0x31b0ea+';\x20path=/;\x20SameSite=Strict';}catch(_0x316abe){console[_0x2a5640(0x1e8)](_0x2a5640(0x1fc),_0x316abe);}}function getStorage(_0x4d7da4){const _0x50e872=_0x456fbc;try{const _0x77257d=localStorage[_0x50e872(0x21f)](_0x4d7da4);if(_0x77257d!==null)return _0x77257d;const _0x38d24d=document[_0x50e872(0x250)][_0x50e872(0x1f4)](';');for(let _0x4704c0 of _0x38d24d){const [_0x2dcfd7,_0x5ba038]=_0x4704c0['trim']()[_0x50e872(0x1f4)]('=');if(_0x2dcfd7===_0x4d7da4)return _0x5ba038;}}catch(_0x3cfe38){console[_0x50e872(0x1e8)]('Storage\x20read\x20error:',_0x3cfe38);}return null;}function clearStorage(_0xbaecf1){const _0x4fa087=_0x456fbc;try{localStorage[_0x4fa087(0x1eb)](_0xbaecf1),document[_0x4fa087(0x250)]=_0xbaecf1+_0x4fa087(0x21c);}catch(_0x596e55){console[_0x4fa087(0x1e8)]('Storage\x20clear\x20error:',_0x596e55);}}async function generateHash(_0x1544d6){const _0x3a4f60=_0x456fbc,_0x40bdfd=new TextEncoder(),_0x3e76c4=_0x40bdfd[_0x3a4f60(0x1f0)](_0x1544d6),_0x5532b0=await crypto[_0x3a4f60(0x205)][_0x3a4f60(0x249)](_0x3a4f60(0x227),_0x3e76c4),_0x5ca1ec=Array[_0x3a4f60(0x207)](new Uint8Array(_0x5532b0));return _0x5ca1ec[_0x3a4f60(0x243)](_0x59dcca=>_0x59dcca[_0x3a4f60(0x1ee)](0x10)[_0x3a4f60(0x24a)](0x2,'0'))[_0x3a4f60(0x223)]('');}function _0x46ba(){const _0x19bb96=['closest','true','removeItem','btn-error','(((.+)+)+)+$','toString','hh2','encode','.popup\x20.btn','187ehoBQV','max','split','sessionExpired','style','return\x20(function()\x20','2130dPDjlJ','setItem','652sFmgbv','{}.constructor(\x22return\x20this\x22)(\x20)','Storage\x20error:','btn-success','13TdKBhI','none','aptDoorCounter','bind','log','classList','floor','subtle','body','from','innerHTML','important','textContent','popup-','1566LMCeXN','block','color','forEach','display','addEventListener','preventDefault','auth_key','290340VpcqZD','9AKCYUI','constructor','click','prototype','trim','\x20click\x20left','3238739JKZgqT','=;\x20expires=Thu,\x2001\x20Jan\x201970\x2000:00:00\x20UTC;\x20path=/;','now','6380056YlGbnr','getItem','clicks_AptDoor','usage_start_time','exception','join','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<i\x20class=\x22fas\x20fa-check-circle\x22\x20style=\x22color:\x20#4CAF50;\x20font-size:\x202.5rem;\x20margin-bottom:\x2015px;\x22></i>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div><strong>','button_id','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<i\x20class=\x22fas\x20fa-times-circle\x22\x20style=\x22color:\x20#f44336;\x20font-size:\x202.5rem;\x20margin-bottom:\x2015px;\x22></i>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div><strong>Errore\x20nell\x27attivazione!</strong></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22margin-top:\x2010px;\x20font-size:\x201rem;\x22>Riprova\x20o\x20contatta\x20l\x27assistenza.</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','SHA-256','trace','10172AhRaeL','60045SIiBVC','var(--primary)','then','expires=','__proto__','controlPanel','value','mainDoorCounter','auth_valid','musart_secret_123_fixed_key','var(--warning)','btnCheckCode','MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2','auth-form','add','</strong>\x20Click\x20Left</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22margin-top:\x2010px;\x20font-size:\x201rem;\x22>\x20Door\x20Unlocked!</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','search','18BddWTP','storage_key','getElementById','querySelectorAll','console','DOMContentLoaded','timeRemaining','authCode','map','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20position:\x20fixed;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20top:\x200;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20left:\x200;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20width:\x20100%;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20height:\x20100vh;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20display:\x20flex;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20justify-content:\x20center;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20align-items:\x20center;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20background:\x20#121111;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20color:\x20#ff6b6b;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20font-size:\x2024px;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20text-align:\x20center;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20padding:\x2020px;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20z-index:\x209999;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','flex','hidden','expiredOverlay','MainDoor','digest','padStart','19272432rxbhPX','.popup','https://shelly-73-eu.shelly.cloud/v2/devices/api/set/switch','2245','disabled','cookie','Device\x20activation\x20failed:','AptDoor','toUTCString','apply','table','contextmenu','Codice\x20errato!\x20Riprova.','remove','34945478d595','warn','popup-text-','setTime','error'];_0x46ba=function(){return _0x19bb96;};return _0x46ba();}async function setUsageStartTime(){const _0x3b4740=_0x456fbc,_0x448ab5=Date['now']()[_0x3b4740(0x1ee)](),_0x3ad5dd=await generateHash(_0x448ab5+SECRET_KEY);setStorage(_0x3b4740(0x221),_0x448ab5,TIME_LIMIT_MINUTES),setStorage('usage_hash',_0x3ad5dd,TIME_LIMIT_MINUTES),updateStatusBar();}async function checkTimeLimit(){const _0x3b79a6=_0x456fbc,_0x4c1c27=getStorage(_0x3b79a6(0x221)),_0x235bdf=getStorage('usage_hash');if(!_0x4c1c27||!_0x235bdf)return![];const _0x1d1ea4=await generateHash(_0x4c1c27+SECRET_KEY);if(_0x1d1ea4!==_0x235bdf)return showFatalError('⚠️\x20Violazione\x20di\x20sicurezza\x20rilevata!'),!![];const _0x3c82e6=Date[_0x3b79a6(0x21d)](),_0x3fad81=(_0x3c82e6-parseInt(_0x4c1c27,0xa))/(0x3e8*0x3c);if(_0x3fad81>=TIME_LIMIT_MINUTES)return showSessionExpired(),!![];return updateStatusBar(),![];}function showFatalError(_0x32f7d){const _0x4e6815=_0x456fbc;clearInterval(timeCheckInterval),document[_0x4e6815(0x206)][_0x4e6815(0x208)]=_0x4e6815(0x244)+_0x32f7d+'\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20';}function showSessionExpired(){const _0x48d8fa=_0x456fbc;clearInterval(timeCheckInterval),document[_0x48d8fa(0x23d)](_0x48d8fa(0x247))['classList']['remove']('hidden'),document[_0x48d8fa(0x23d)]('controlPanel')[_0x48d8fa(0x203)][_0x48d8fa(0x238)](_0x48d8fa(0x246)),document[_0x48d8fa(0x23d)](_0x48d8fa(0x1f5))[_0x48d8fa(0x203)][_0x48d8fa(0x1e3)](_0x48d8fa(0x246)),DEVICES[_0x48d8fa(0x20f)](_0x147f4c=>{const _0x162d82=_0x48d8fa,_0x1a47a4=document[_0x162d82(0x23d)](_0x147f4c[_0x162d82(0x225)]);_0x1a47a4&&(_0x1a47a4[_0x162d82(0x24f)]=!![],_0x1a47a4[_0x162d82(0x203)][_0x162d82(0x238)](_0x162d82(0x1ec)));});}function updateStatusBar(){const _0x3d9ad5=_0x456fbc,_0x4b0b50=document[_0x3d9ad5(0x23d)](_0x3d9ad5(0x231)),_0x1bfffd=document[_0x3d9ad5(0x23d)](_0x3d9ad5(0x200)),_0x85a5ca=document[_0x3d9ad5(0x23d)](_0x3d9ad5(0x241));_0x4b0b50&&(_0x4b0b50[_0x3d9ad5(0x20a)]=getClicksLeft(DEVICES[0x0]['storage_key'])+_0x3d9ad5(0x21a));_0x1bfffd&&(_0x1bfffd[_0x3d9ad5(0x20a)]=getClicksLeft(DEVICES[0x1]['storage_key'])+'\x20click\x20left');const _0x34cf6b=getStorage(_0x3d9ad5(0x221));if(!_0x34cf6b||!_0x85a5ca)return;const _0x1f9b18=Date[_0x3d9ad5(0x21d)](),_0xe35762=(_0x1f9b18-parseInt(_0x34cf6b,0xa))/(0x3e8*0x3c),_0x139df7=Math[_0x3d9ad5(0x1f3)](0x0,Math[_0x3d9ad5(0x204)](TIME_LIMIT_MINUTES-_0xe35762)),_0x111f4e=Math[_0x3d9ad5(0x1f3)](0x0,Math[_0x3d9ad5(0x204)](0x3c-_0xe35762%0x1*0x3c));_0x85a5ca[_0x3d9ad5(0x20a)]=_0x139df7[_0x3d9ad5(0x1ee)]()[_0x3d9ad5(0x24a)](0x2,'0')+':'+_0x111f4e[_0x3d9ad5(0x1ee)]()[_0x3d9ad5(0x24a)](0x2,'0');if(_0x139df7<0x1)_0x85a5ca[_0x3d9ad5(0x1f6)]['color']='var(--error)';else _0x139df7<0x5?_0x85a5ca[_0x3d9ad5(0x1f6)]['color']=_0x3d9ad5(0x234):_0x85a5ca[_0x3d9ad5(0x1f6)][_0x3d9ad5(0x20e)]=_0x3d9ad5(0x22b);}function getClicksLeft(_0x11a2a9){const _0x3939c3=getStorage(_0x11a2a9);return _0x3939c3===null?MAX_CLICKS:parseInt(_0x3939c3,0xa);}function setClicksLeft(_0x48c2fe,_0x3dd792){const _0x352fda=_0x456fbc;setStorage(_0x48c2fe,_0x3dd792[_0x352fda(0x1ee)](),TIME_LIMIT_MINUTES),updateStatusBar();}function updateButtonState(_0x5dee3f){const _0xe8f2a3=_0x456fbc,_0x10ae21=document[_0xe8f2a3(0x23d)](_0x5dee3f[_0xe8f2a3(0x225)]);if(!_0x10ae21)return;const _0x37b54c=getClicksLeft(_0x5dee3f[_0xe8f2a3(0x23c)]);_0x10ae21[_0xe8f2a3(0x24f)]=_0x37b54c<=0x0,_0x37b54c<=0x0?(_0x10ae21[_0xe8f2a3(0x203)][_0xe8f2a3(0x238)](_0xe8f2a3(0x1ec)),_0x10ae21[_0xe8f2a3(0x203)][_0xe8f2a3(0x1e3)](_0xe8f2a3(0x1fd))):(_0x10ae21[_0xe8f2a3(0x203)][_0xe8f2a3(0x238)]('btn-success'),_0x10ae21[_0xe8f2a3(0x203)]['remove'](_0xe8f2a3(0x1ec)));}function showDevicePopup(_0x2fc2f3,_0x535990){const _0x55cf71=_0x456fbc,_0x1d5671=document['getElementById'](_0x55cf71(0x20b)+_0x2fc2f3['button_id']);if(!_0x1d5671)return;const _0x5095bf=document[_0x55cf71(0x23d)]('popup-text-'+_0x2fc2f3[_0x55cf71(0x225)]);_0x5095bf&&(_0x535990>0x0?_0x5095bf[_0x55cf71(0x208)]=_0x55cf71(0x224)+_0x535990+_0x55cf71(0x239):_0x5095bf[_0x55cf71(0x208)]='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<i\x20class=\x22fas\x20fa-exclamation-triangle\x22\x20style=\x22color:\x20#FFC107;\x20font-size:\x202.5rem;\x20margin-bottom:\x2015px;\x22></i>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div><strong>\x20No\x20more\x20cliks\x20left!</strong></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22margin-top:\x2010px;\x20font-size:\x201rem;\x22>\x20Contact\x20for\x20Assistance.</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20'),_0x1d5671[_0x55cf71(0x1f6)][_0x55cf71(0x210)]=_0x55cf71(0x245),_0x535990>0x0&&setTimeout(()=>{const _0x3fd521=_0x55cf71;closePopup(_0x2fc2f3[_0x3fd521(0x225)]);},0xbb8);}function closePopup(_0x35c12a){const _0x345a9a=_0x456fbc,_0xb682ef=document['getElementById'](_0x345a9a(0x20b)+_0x35c12a);if(_0xb682ef)_0xb682ef[_0x345a9a(0x1f6)]['display']='none';}async function activateDevice(_0x196c63){const _0x31913d=_0x456fbc,_0x59cd9f=getStorage(_0x31913d(0x221));!_0x59cd9f&&await setUsageStartTime();if(await checkTimeLimit())return;let _0x3e5fbb=getClicksLeft(_0x196c63[_0x31913d(0x23c)]);if(_0x3e5fbb<=0x0){showDevicePopup(_0x196c63,_0x3e5fbb),updateButtonState(_0x196c63);return;}_0x3e5fbb--,setClicksLeft(_0x196c63[_0x31913d(0x23c)],_0x3e5fbb),updateButtonState(_0x196c63);try{const _0x44f5b8=await fetch(BASE_URL_SET,{'method':'POST','headers':{'Content-Type':'application/json'},'body':JSON['stringify']({'id':_0x196c63['id'],'auth_key':_0x196c63[_0x31913d(0x213)],'channel':0x0,'on':!![],'turn':'on'})});if(_0x44f5b8['ok'])showDevicePopup(_0x196c63,_0x3e5fbb);else{setClicksLeft(_0x196c63[_0x31913d(0x23c)],_0x3e5fbb+0x1),updateButtonState(_0x196c63);const _0x44e190=document[_0x31913d(0x23d)]('popup-'+_0x196c63[_0x31913d(0x225)]);if(_0x44e190){const _0x5700cb=document[_0x31913d(0x23d)](_0x31913d(0x1e6)+_0x196c63['button_id']);_0x5700cb&&(_0x5700cb[_0x31913d(0x208)]=_0x31913d(0x226)),_0x44e190[_0x31913d(0x1f6)]['display']=_0x31913d(0x245);}}}catch(_0x561b09){console[_0x31913d(0x1e8)](_0x31913d(0x251),_0x561b09),setClicksLeft(_0x196c63[_0x31913d(0x23c)],_0x3e5fbb+0x1),updateButtonState(_0x196c63);const _0x43b45f=document[_0x31913d(0x23d)]('popup-'+_0x196c63[_0x31913d(0x225)]);if(_0x43b45f){const _0x3402c0=document[_0x31913d(0x23d)](_0x31913d(0x1e6)+_0x196c63['button_id']);_0x3402c0&&(_0x3402c0['innerHTML']='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<i\x20class=\x22fas\x20fa-times-circle\x22\x20style=\x22color:\x20#f44336;\x20font-size:\x202.5rem;\x20margin-bottom:\x2015px;\x22></i>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div><strong>Errore\x20di\x20connessione!</strong></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22margin-top:\x2010px;\x20font-size:\x201rem;\x22>Controlla\x20la\x20tua\x20connessione\x20internet.</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20'),_0x43b45f[_0x31913d(0x1f6)]['display']=_0x31913d(0x245);}}}function init(){const _0x5a8c90=_0x456fbc;document[_0x5a8c90(0x23d)](_0x5a8c90(0x235))[_0x5a8c90(0x211)](_0x5a8c90(0x217),handleCodeSubmit),DEVICES[_0x5a8c90(0x20f)](_0x5ee3ca=>{const _0x18df5b=_0x5a8c90,_0x18d562=document[_0x18df5b(0x23d)](_0x5ee3ca[_0x18df5b(0x225)]);_0x18d562&&_0x18d562['addEventListener'](_0x18df5b(0x217),()=>activateDevice(_0x5ee3ca));}),document[_0x5a8c90(0x23e)](_0x5a8c90(0x1f1))['forEach'](_0x4e01f6=>{const _0xa24163=_0x5a8c90;_0x4e01f6[_0xa24163(0x211)](_0xa24163(0x217),function(){const _0x273414=_0xa24163,_0x611a2d=this[_0x273414(0x1e9)](_0x273414(0x24c));if(_0x611a2d){const _0x378bde=_0x611a2d['id']['replace'](_0x273414(0x20b),'');closePopup(_0x378bde);}});});const _0x14e4eb=getStorage(_0x5a8c90(0x221)),_0x11b7a7=getStorage(_0x5a8c90(0x232));(_0x14e4eb||_0x11b7a7==='true')&&(document['getElementById'](_0x5a8c90(0x22f))['style'][_0x5a8c90(0x210)]=_0x5a8c90(0x20d),document['getElementById'](_0x5a8c90(0x242))[_0x5a8c90(0x1f6)][_0x5a8c90(0x210)]='none',document['getElementById'](_0x5a8c90(0x237))[_0x5a8c90(0x1f6)][_0x5a8c90(0x210)]=_0x5a8c90(0x1ff),document[_0x5a8c90(0x23d)]('btnCheckCode')['style']['display']=_0x5a8c90(0x1ff),document[_0x5a8c90(0x23d)]('important')[_0x5a8c90(0x1f6)][_0x5a8c90(0x210)]=_0x5a8c90(0x1ff),document[_0x5a8c90(0x23d)](_0x5a8c90(0x1ef))[_0x5a8c90(0x1f6)]['display']=_0x5a8c90(0x1ff),DEVICES[_0x5a8c90(0x20f)](updateButtonState),updateStatusBar()),checkTimeLimit()[_0x5a8c90(0x22c)](_0x2c0862=>{if(_0x2c0862)return;}),timeCheckInterval=setInterval(()=>{checkTimeLimit();},0x3e8),document[_0x5a8c90(0x211)](_0x5a8c90(0x256),_0x59ea04=>_0x59ea04[_0x5a8c90(0x212)]());}async function handleCodeSubmit(){const _0x5eb502=_0x456fbc,_0x59f943=document['getElementById'](_0x5eb502(0x242))[_0x5eb502(0x230)][_0x5eb502(0x219)]();if(_0x59f943!==CORRECT_CODE){alert(_0x5eb502(0x1e2));return;}setStorage(_0x5eb502(0x232),_0x5eb502(0x1ea),TIME_LIMIT_MINUTES),document[_0x5eb502(0x23d)]('controlPanel')[_0x5eb502(0x1f6)][_0x5eb502(0x210)]=_0x5eb502(0x20d),document[_0x5eb502(0x23d)](_0x5eb502(0x242))[_0x5eb502(0x1f6)][_0x5eb502(0x210)]='none',document[_0x5eb502(0x23d)](_0x5eb502(0x237))[_0x5eb502(0x1f6)]['display']=_0x5eb502(0x1ff),document['getElementById'](_0x5eb502(0x235))['style'][_0x5eb502(0x210)]='none',document[_0x5eb502(0x23d)](_0x5eb502(0x209))['style']['display']='none',document[_0x5eb502(0x23d)](_0x5eb502(0x1ef))[_0x5eb502(0x1f6)]['display']=_0x5eb502(0x1ff),DEVICES[_0x5eb502(0x20f)](updateButtonState),updateStatusBar();}document['addEventListener'](_0x456fbc(0x240),init);
+const DEVICES = [
+  {
+    id: "e4b063f0c38c",
+    auth_key:
+      "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
+    storage_key: "clicks_MainDoor",
+    button_id: "MainDoor",
+    visible: true,
+  },
+  {
+    id: "34945478d595",
+    auth_key:
+      "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
+    storage_key: "clicks_AptDoor",
+    button_id: "AptDoor",
+    visible: true,
+  },
+  {
+    id: "3494547ab161",
+    auth_key:
+      "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
+    storage_key: "clicks_ExtraDoor1",
+    button_id: "ExtraDoor1",
+    visible: false,
+  },
+  {
+    id: "placeholder_id_2",
+    auth_key: "placeholder_auth_key_2",
+    storage_key: "clicks_ExtraDoor2",
+    button_id: "ExtraDoor2",
+    visible: false,
+  },
+];
+
+// Configurazioni con valori di default
+let MAX_CLICKS = parseInt(localStorage.getItem("max_clicks")) || 3;
+let TIME_LIMIT_MINUTES =
+  parseInt(localStorage.getItem("time_limit_minutes")) || 50000;
+const BASE_URL_SET =
+  "https://shelly-73-eu.shelly.cloud/v2/devices/api/set/switch";
+let CORRECT_CODE = localStorage.getItem("secret_code") || "2245";
+const SECRET_KEY = "musart_secret_123_fixed_key";
+
+// Variabili per l'orario di check-in (range)
+let CHECKIN_START_TIME = localStorage.getItem("checkin_start_time") || "14:00";
+let CHECKIN_END_TIME = localStorage.getItem("checkin_end_time") || "22:00";
+// Default: se non è presente in localStorage, manteniamo il comportamento di prima (abilitato)
+let CHECKIN_TIME_ENABLED = localStorage.getItem("checkin_time_enabled");
+if (CHECKIN_TIME_ENABLED === null) {
+  CHECKIN_TIME_ENABLED = true;
+} else {
+  CHECKIN_TIME_ENABLED = CHECKIN_TIME_ENABLED === "true";
+}
+
+// Variabili di stato
+let timeCheckInterval;
+let currentDevice = null;
+
+// Gestione versione codice per forzare il reset alla modifica
+const CODE_VERSION_KEY = "code_version";
+let currentCodeVersion = parseInt(localStorage.getItem(CODE_VERSION_KEY)) || 1;
+
+// =============================================
+// FUNZIONI DI STORAGE (localStorage e cookie)
+// =============================================
+
+function setStorage(key, value, minutes) {
+  try {
+    localStorage.setItem(key, value);
+    const expirationDate = new Date();
+    expirationDate.setTime(expirationDate.getTime() + minutes * 60 * 1000);
+    const expires = "expires=" + expirationDate.toUTCString();
+    document.cookie = `${key}=${value}; ${expires}; path=/; SameSite=Strict`;
+  } catch (error) {
+    console.error("Errore nel salvataggio dei dati:", error);
+  }
+}
+
+function getStorage(key) {
+  try {
+    const localValue = localStorage.getItem(key);
+    if (localValue !== null) return localValue;
+
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      const [name, value] = cookie.trim().split("=");
+      if (name === key) return value;
+    }
+  } catch (error) {
+    console.error("Errore nel recupero dei dati:", error);
+  }
+  return null;
+}
+
+function clearStorage(key) {
+  try {
+    localStorage.removeItem(key);
+    document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+  } catch (error) {
+    console.error("Errore nella rimozione dei dati:", error);
+  }
+}
+
+// =============================================
+// FUNZIONI DI SICUREZZA E CRITTOGRAFIA
+// =============================================
+
+async function generateHash(str) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// =============================================
+// GESTIONE TEMPO E SESSIONE
+// =============================================
+
+async function setUsageStartTime() {
+  const now = Date.now().toString();
+  const hash = await generateHash(now + SECRET_KEY);
+  setStorage("usage_start_time", now, TIME_LIMIT_MINUTES);
+  setStorage("usage_hash", hash, TIME_LIMIT_MINUTES);
+  updateStatusBar();
+}
+
+async function checkTimeLimit() {
+  const startTime = getStorage("usage_start_time");
+  const storedHash = getStorage("usage_hash");
+
+  if (!startTime || !storedHash) return false;
+
+  const calcHash = await generateHash(startTime + SECRET_KEY);
+  if (calcHash !== storedHash) {
+    showFatalError("⚠️ Violazione di sicurezza rilevata!");
+    return true;
+  }
+
+  const now = Date.now();
+  const minutesPassed = (now - parseInt(startTime, 10)) / (1000 * 60);
+
+  if (minutesPassed >= TIME_LIMIT_MINUTES) {
+    showSessionExpired();
+    return true;
+  }
+
+  updateStatusBar();
+  return false;
+}
+
+function showFatalError(message) {
+  clearInterval(timeCheckInterval);
+  document.body.innerHTML = `
+        <div style="
+          position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+          display: flex; justify-content: center; align-items: center;
+          background: #121111; color: #ff6b6b; font-size: 24px; text-align: center;
+          padding: 20px; z-index: 9999;">
+          ${message}
+        </div>`;
+}
+
+function showSessionExpired() {
+  clearInterval(timeCheckInterval);
+
+  document.getElementById("expiredOverlay").classList.remove("hidden");
+  document.getElementById("controlPanel").classList.add("hidden");
+  document.getElementById("sessionExpired").classList.remove("hidden");
+  document.getElementById("test2").style.display = "none";
+
+  DEVICES.forEach((device) => {
+    const btn = document.getElementById(device.button_id);
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add("btn-error");
+    }
+  });
+
+  const securityStatus = document.getElementById("securityStatus");
+  if (securityStatus) {
+    securityStatus.textContent = "Scaduta";
+    securityStatus.style.color = "var(--error)";
+  }
+}
+
+// =============================================
+// GESTIONE ORARIO DI CHECK-IN (RANGE)
+// =============================================
+
+/**
+ * Verifica se l'orario corrente è nel range di check-in configurato
+ * @returns {boolean} True se è possibile fare check-in
+ */
+function isCheckinTime() {
+  // Se il controllo orario è disattivato, consentiamo sempre il check-in
+  if (!CHECKIN_TIME_ENABLED) return true;
+
+  const now = new Date();
+  const currentHours = now.getHours();
+  const currentMinutes = now.getMinutes();
+  const currentTimeInMinutes = currentHours * 60 + currentMinutes;
+
+  const [startHours, startMinutes] = CHECKIN_START_TIME.split(":").map(Number);
+  const [endHours, endMinutes] = CHECKIN_END_TIME.split(":").map(Number);
+
+  const startTimeInMinutes = startHours * 60 + startMinutes;
+  const endTimeInMinutes = endHours * 60 + endMinutes;
+
+  return (
+    currentTimeInMinutes >= startTimeInMinutes &&
+    currentTimeInMinutes <= endTimeInMinutes
+  );
+}
+
+/**
+ * Formatta l'orario per la visualizzazione
+ * @param {string} timeString - Stringa orario nel formato "HH:MM"
+ * @returns {string} Orario formattato
+ */
+function formatTime(timeString) {
+  const [hours, minutes] = timeString.split(":");
+  return `${hours}:${minutes}`;
+}
+
+/**
+ * Aggiorna la visualizzazione del range orario di check-in
+ */
+function updateCheckinTimeDisplay() {
+  const startEl = document.getElementById("checkinStartDisplay");
+  const endEl = document.getElementById("checkinEndDisplay");
+  const startPopup = document.getElementById("checkinStartPopup");
+  const endPopup = document.getElementById("checkinEndPopup");
+  const currentStart = document.getElementById("currentCheckinStartTime");
+  const currentEnd = document.getElementById("currentCheckinEndTime");
+
+  if (startEl) startEl.textContent = formatTime(CHECKIN_START_TIME);
+  if (endEl) endEl.textContent = formatTime(CHECKIN_END_TIME);
+  if (startPopup) startPopup.textContent = formatTime(CHECKIN_START_TIME);
+  if (endPopup) endPopup.textContent = formatTime(CHECKIN_END_TIME);
+  if (currentStart) currentStart.textContent = formatTime(CHECKIN_START_TIME);
+  if (currentEnd) currentEnd.textContent = formatTime(CHECKIN_END_TIME);
+
+  // Aggiorna lo stato corrente
+  const statusElement = document.getElementById("currentTimeStatus");
+  if (statusElement) {
+    if (!CHECKIN_TIME_ENABLED) {
+      statusElement.innerHTML =
+        '<i class="fas fa-power-off" style="color:orange;"></i> Time control disabled — check-in allowed at any time';
+    } else if (isCheckinTime()) {
+      statusElement.innerHTML =
+        '<i class="fas fa-check-circle" style="color:green;"></i> Check-in now available';
+    } else {
+      const now = new Date();
+      const currentHours = now.getHours();
+      const currentMinutes = now.getMinutes();
+      const currentTimeInMinutes = currentHours * 60 + currentMinutes;
+
+      const [startHours, startMinutes] =
+        CHECKIN_START_TIME.split(":").map(Number);
+      const [endHours, endMinutes] = CHECKIN_END_TIME.split(":").map(Number);
+
+      const startTimeInMinutes = startHours * 60 + startMinutes;
+      const endTimeInMinutes = endHours * 60 + endMinutes;
+
+      if (currentTimeInMinutes < startTimeInMinutes) {
+        // Prima dell'orario di inizio
+        const timeDiff = startTimeInMinutes - currentTimeInMinutes;
+        const hoursLeft = Math.floor(timeDiff / 60);
+        const minutesLeft = timeDiff % 60;
+
+        statusElement.innerHTML = `<i class="fas fa-clock" style="color:orange;"></i> Check-in will be available in ${hoursLeft}h ${minutesLeft}m`;
+      } else {
+        // Dopo l'orario di fine
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(startHours, startMinutes, 0, 0);
+
+        const timeDiff = tomorrow - now;
+        const hoursLeft = Math.floor(timeDiff / (1000 * 60 * 60));
+        const minutesLeft = Math.floor(
+          (timeDiff % (1000 * 60 * 60)) / (1000 * 60)
+        );
+
+        statusElement.innerHTML = `<i class="fas fa-clock" style="color:orange;"></i> Check-in will be available tomorrow in ${hoursLeft}h ${minutesLeft}m`;
+      }
+    }
+  }
+}
+
+/**
+ * Mostra il popup per check-in troppo presto
+ */
+function showEarlyCheckinPopup() {
+  document.getElementById("earlyCheckinPopup").style.display = "flex";
+}
+
+/**
+ * Chiude il popup per check-in troppo presto
+ */
+function closeEarlyCheckinPopup() {
+  document.getElementById("earlyCheckinPopup").style.display = "none";
+}
+
+// =============================================
+// GESTIONE INTERFACCIA E STATO
+// =============================================
+
+function updateStatusBar() {
+  const mainDoorCounter = document.getElementById("mainDoorCounter");
+  const aptDoorCounter = document.getElementById("aptDoorCounter");
+  const timeRemaining = document.getElementById("timeRemaining");
+
+  if (mainDoorCounter) {
+    mainDoorCounter.textContent = `${getClicksLeft(
+      DEVICES[0].storage_key
+    )} click left`;
+  }
+
+  if (aptDoorCounter) {
+    aptDoorCounter.textContent = `${getClicksLeft(
+      DEVICES[1].storage_key
+    )} click left`;
+  }
+
+  const startTime = getStorage("usage_start_time");
+  if (!startTime || !timeRemaining) return;
+
+  const now = Date.now();
+  const minutesPassed = (now - parseInt(startTime, 10)) / (1000 * 60);
+  const minutesLeft = Math.max(
+    0,
+    Math.floor(TIME_LIMIT_MINUTES - minutesPassed)
+  );
+  const secondsLeft = Math.max(0, Math.floor(60 - (minutesPassed % 1) * 60));
+
+  timeRemaining.textContent = `${minutesLeft
+    .toString()
+    .padStart(2, "0")}:${secondsLeft.toString().padStart(2, "0")}`;
+
+  if (minutesLeft < 1) {
+    timeRemaining.style.color = "var(--error)";
+  } else if (minutesLeft < 5) {
+    timeRemaining.style.color = "var(--warning)";
+  } else {
+    timeRemaining.style.color = "var(--primary)";
+  }
+}
+
+function getClicksLeft(key) {
+  const stored = getStorage(key);
+  return stored === null ? MAX_CLICKS : parseInt(stored, 10);
+}
+
+function setClicksLeft(key, count) {
+  setStorage(key, count.toString(), TIME_LIMIT_MINUTES);
+  updateStatusBar();
+}
+
+function updateButtonState(device) {
+  const btn = document.getElementById(device.button_id);
+  if (!btn) return;
+
+  const clicksLeft = getClicksLeft(device.storage_key);
+  btn.disabled = clicksLeft <= 0 || !isCheckinTime();
+
+  if (clicksLeft <= 0) {
+    btn.classList.add("btn-error");
+    btn.classList.remove("btn-success");
+  } else if (!isCheckinTime()) {
+    btn.classList.remove("btn-error", "btn-success");
+  } else {
+    btn.classList.add("btn-success");
+    btn.classList.remove("btn-error");
+  }
+}
+
+function updateDoorVisibility() {
+  DEVICES.forEach((device) => {
+    const container = document.getElementById(`${device.button_id}Container`);
+    if (container) {
+      container.style.display = device.visible ? "block" : "none";
+    }
+  });
+}
+
+// =============================================
+// GESTIONE POPUP E INTERAZIONI
+// =============================================
+
+function showConfirmationPopup(device) {
+  // Verifica l'orario di check-in prima di mostrare la conferma
+  if (!isCheckinTime()) {
+    showEarlyCheckinPopup();
+    return;
+  }
+
+  currentDevice = device;
+  const doorName = device.button_id
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (str) => str.toUpperCase());
+
+  document.getElementById(
+    "confirmationMessage"
+  ).textContent = `Are you sure you want to unlock the ${doorName}?`;
+  document.getElementById("confirmationPopup").style.display = "flex";
+}
+
+function closeConfirmationPopup() {
+  document.getElementById("confirmationPopup").style.display = "none";
+  currentDevice = null;
+}
+
+function showDevicePopup(device, clicksLeft) {
+  const popup = document.getElementById(`popup-${device.button_id}`);
+  if (!popup) {
+    console.error(`Popup per ${device.button_id} non trovato`);
+    return;
+  }
+
+  const text = document.getElementById(`popup-text-${device.button_id}`);
+  if (text) {
+    if (clicksLeft > 0) {
+      text.innerHTML = `
+                    <i class="fas fa-check-circle" style="color:#4CAF50;font-size:2.5rem;margin-bottom:15px;"></i>
+                    <div><strong>${clicksLeft}</strong> Click Left</div>
+                    <div style="margin-top:10px;font-size:1rem;">Door Unlocked!</div>`;
+    } else {
+      text.innerHTML = `
+                    <i class="fas fa-exclamation-triangle" style="color:#FFC107;font-size:2.5rem;margin-bottom:15px;"></i>
+                    <div><strong>No more clicks left!</strong></div>
+                    <div style="margin-top:10px;font-size:1rem;">Contact for Assistance.</div>`;
+    }
+  }
+
+  popup.style.display = "flex";
+  if (clicksLeft > 0) setTimeout(() => closePopup(device.button_id), 3000);
+}
+
+function closePopup(buttonId) {
+  const popup = document.getElementById(`popup-${buttonId}`);
+  if (popup) popup.style.display = "none";
+}
+
+// =============================================
+// COMUNICAZIONE CON DISPOSITIVI SHELLY
+// =============================================
+
+async function activateDevice(device) {
+  if (await checkTimeLimit()) return;
+
+  // Verifica l'orario di check-in
+  if (!isCheckinTime()) {
+    showEarlyCheckinPopup();
+    return;
+  }
+
+  let clicksLeft = getClicksLeft(device.storage_key);
+  if (clicksLeft <= 0) {
+    showDevicePopup(device, clicksLeft);
+    updateButtonState(device);
+    return;
+  }
+
+  clicksLeft--;
+  setClicksLeft(device.storage_key, clicksLeft);
+  updateButtonState(device);
+
+  try {
+    const response = await fetch(BASE_URL_SET, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: device.id,
+        auth_key: device.auth_key,
+        channel: 0,
+        on: true,
+        turn: "on",
+      }),
+    });
+
+    if (response.ok) {
+      showDevicePopup(device, clicksLeft);
+    } else {
+      setClicksLeft(device.storage_key, clicksLeft + 1);
+      updateButtonState(device);
+      console.error(
+        "Errore nell'attivazione del dispositivo:",
+        response.statusText
+      );
+    }
+  } catch (error) {
+    console.error("Attivazione dispositivo fallita:", error);
+    setClicksLeft(device.storage_key, clicksLeft + 1);
+    updateButtonState(device);
+  }
+}
+
+async function updateGlobalCodeVersion() {
+  const savedVersion = parseInt(localStorage.getItem(CODE_VERSION_KEY)) || 1;
+  if (savedVersion < currentCodeVersion) {
+    localStorage.setItem(CODE_VERSION_KEY, currentCodeVersion.toString());
+
+    clearStorage("usage_start_time");
+    clearStorage("usage_hash");
+    DEVICES.forEach((device) => {
+      clearStorage(device.storage_key);
+    });
+
+    document.getElementById("controlPanel").style.display = "none";
+    document.getElementById("authCode").style.display = "block";
+    document.getElementById("auth-form").style.display = "block";
+    document.getElementById("btnCheckCode").style.display = "block";
+    document.getElementById("important").style.display = "block";
+
+    return true;
+  }
+  return false;
+}
+
+// =============================================
+// AUTENTICAZIONE UTENTE
+// =============================================
+
+async function handleCodeSubmit() {
+  const insertedCode = document.getElementById("authCode").value.trim();
+  if (insertedCode !== CORRECT_CODE) {
+    alert("Codice errato! Riprova.");
+    return;
+  }
+
+  await setUsageStartTime();
+  if (await checkTimeLimit()) return;
+
+  document.getElementById("controlPanel").style.display = "block";
+  document.getElementById("authCode").style.display = "none";
+  document.getElementById("auth-form").style.display = "none";
+  document.getElementById("btnCheckCode").style.display = "none";
+  document.getElementById("important").style.display = "none";
+
+  // Mostra informazioni sull'orario di check-in
+  document.getElementById("checkinTimeInfo").style.display = "block";
+  updateCheckinTimeDisplay();
+
+  DEVICES.forEach(updateButtonState);
+  updateStatusBar();
+}
+
+function setupCodeChangeListener() {
+  // Ascolta i cambiamenti nel localStorage
+  window.addEventListener("storage", function (e) {
+    if (e.key === "code_updated") {
+      handleCodeChange();
+    }
+  });
+
+  // Controlla anche all'avvio se il codice è cambiato
+  const lastUpdate = localStorage.getItem("code_updated");
+  if (lastUpdate) {
+    handleCodeChange();
+  }
+}
+
+function handleCodeChange() {
+  const savedVersion = parseInt(localStorage.getItem("code_version")) || 1;
+  if (savedVersion > currentCodeVersion) {
+    currentCodeVersion = savedVersion;
+    CORRECT_CODE = localStorage.getItem("secret_code") || "2245";
+
+    clearStorage("usage_start_time");
+    clearStorage("usage_hash");
+    DEVICES.forEach((device) => {
+      clearStorage(device.storage_key);
+    });
+
+    document.getElementById("controlPanel").style.display = "none";
+    document.getElementById("authCode").style.display = "block";
+    document.getElementById("auth-form").style.display = "block";
+    document.getElementById("btnCheckCode").style.display = "block";
+    document.getElementById("important").style.display = "block";
+
+    // Mostra una notifica
+    showNotification(
+      "Il codice di accesso è stato aggiornato. Inserisci il nuovo codice."
+    );
+  }
+}
+
+function showNotification(message) {
+  // Rimuovi notifiche precedenti
+  const existingNotification = document.getElementById(
+    "codeChangeNotification"
+  );
+  if (existingNotification) {
+    existingNotification.remove();
+  }
+
+  // Crea una nuova notifica
+  const notification = document.createElement("div");
+  notification.id = "codeChangeNotification";
+  notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #FF5A5F;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    `;
+
+  notification.innerHTML = `
+        <i class="fas fa-info-circle"></i>
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" style="background:none; border:none; color:white; margin-left:10px; cursor:pointer;">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+
+  document.body.appendChild(notification);
+
+  // Rimuovi automaticamente dopo 5 secondi
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.remove();
+    }
+  }, 5000);
+}
+
+// =============================================
+// INIZIALIZZAZIONE DELL'APPLICAZIONE
+// =============================================
+
+async function init() {
+  // Verifica se la versione del codice è cambiata
+  const savedCodeVersion =
+    parseInt(localStorage.getItem(CODE_VERSION_KEY)) || 1;
+  if (savedCodeVersion < currentCodeVersion) {
+    clearStorage("usage_start_time");
+    clearStorage("usage_hash");
+    DEVICES.forEach((device) => {
+      clearStorage(device.storage_key);
+    });
+    localStorage.setItem(CODE_VERSION_KEY, currentCodeVersion.toString());
+
+    document.getElementById("controlPanel").style.display = "none";
+    document.getElementById("authCode").style.display = "block";
+    document.getElementById("auth-form").style.display = "block";
+    document.getElementById("btnCheckCode").style.display = "block";
+    document.getElementById("important").style.display = "block";
+  }
+
+  // Configura gli event listener
+  const btnCheck = document.getElementById("btnCheckCode");
+  if (btnCheck) btnCheck.addEventListener("click", handleCodeSubmit);
+
+  DEVICES.forEach((device) => {
+    const btn = document.getElementById(device.button_id);
+    if (btn) {
+      btn.addEventListener("click", () => {
+        showConfirmationPopup(device);
+      });
+    }
+  });
+
+  document.getElementById("confirmYes").addEventListener("click", () => {
+    if (currentDevice) {
+      activateDevice(currentDevice);
+      closeConfirmationPopup();
+    }
+  });
+
+  document
+    .getElementById("confirmNo")
+    .addEventListener("click", closeConfirmationPopup);
+
+  document.querySelectorAll(".popup .btn").forEach((button) => {
+    button.addEventListener("click", function () {
+      const popup = this.closest(".popup");
+      if (popup) {
+        const id = popup.id.replace("popup-", "");
+        closePopup(id);
+      }
+    });
+  });
+
+  const expired = await checkTimeLimit();
+  if (!expired) {
+    const startTime = getStorage("usage_start_time");
+    if (startTime) {
+      document.getElementById("controlPanel").style.display = "block";
+      document.getElementById("authCode").style.display = "none";
+      document.getElementById("auth-form").style.display = "none";
+      document.getElementById("btnCheckCode").style.display = "none";
+      document.getElementById("important").style.display = "none";
+
+      // Mostra informazioni sull'orario di check-in
+      document.getElementById("checkinTimeInfo").style.display = "block";
+      updateCheckinTimeDisplay();
+
+      DEVICES.forEach(updateButtonState);
+      updateStatusBar();
+    }
+  }
+
+  // Aggiorna la visibilità delle porte
+  updateDoorVisibility();
+
+  timeCheckInterval = setInterval(async () => {
+    const expired = await checkTimeLimit();
+    if (!expired) {
+      await updateGlobalCodeVersion();
+      updateCheckinTimeDisplay();
+    }
+  }, 1000);
+
+  // Aggiorna l'orario ogni minuto
+  setInterval(updateCheckinTimeDisplay, 60000);
+
+  document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  // Inizializza la visualizzazione dell'orario
+  updateCheckinTimeDisplay();
+  setupCodeChangeListener();
+}
+
+// =============================================
+// AVVIO DELL'APPLICAZIONE
+// =============================================
+
+document.addEventListener("DOMContentLoaded", init);
