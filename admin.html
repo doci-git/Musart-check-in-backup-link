@@ -16,472 +16,380 @@
       rel="stylesheet"
     />
   </head>
-  <body>
-    <!-- Modale di login -->
+ <body>
     <div id="loginModal" class="login-modal">
-      <div class="login-container">
-        <h2><i class="fas fa-lock"></i> Accesso Amministratore</h2>
-        <p>Inserisci la password per accedere al pannello di controllo</p>
-        <input
-          type="password"
-          id="adminPassword"
-          class="login-input"
-          placeholder="Password"
-          autocomplete="off"
-        />
-        <div id="loginError" class="login-error">
-          <i class="fas fa-exclamation-circle"></i> Password errata
+        <div class="login-container">
+            <h2><i class="fas fa-lock"></i> Accesso Amministratore</h2>
+            <p>Inserisci la password per accedere al pannello di controllo</p>
+            <input type="password" id="adminPassword" class="login-input" placeholder="Password" autocomplete="off">
+            <div id="loginError" class="login-error">
+                <i class="fas fa-exclamation-circle"></i> Password errata
+            </div>
+            <button id="btnLogin" class="btn">
+                <i class="fas fa-sign-in-alt"></i> Accedi
+            </button>
         </div>
-        <button id="btnLogin" class="btn">
-          <i class="fas fa-sign-in-alt"></i> Accedi
-        </button>
-      </div>
     </div>
 
     <div class="admin-container" id="adminContainer">
-      <div class="admin-header">
-        <h1><i class="fas fa-cogs"></i> Pannello di Amministrazione</h1>
-        <p>Gestisci le impostazioni del sistema di check-in</p>
-      </div>
-
-      <div class="admin-content">
-        <a href="index.html" class="back-button">
-          <i class="fas fa-arrow-left"></i> Torna alla schermata principale
-        </a>
-
-        <div class="admin-section">
-          <h3><i class="fas fa-key"></i> Gestione Codice Segreto</h3>
-          <div class="input-group">
-            <label for="currentCode">Codice attuale</label>
-            <input type="text" id="currentCode" readonly class="a12" />
-          </div>
-          <div class="input-group">
-            <label for="newCode">Nuovo codice</label>
-            <input
-              type="text"
-              id="newCode"
-              placeholder="Inserisci nuovo codice"
-            />
-          </div>
-          <button id="btnCodeUpdate" class="btn">
-            <i class="fas fa-sync-alt"></i> Aggiorna Codice
-          </button>
+        <div class="admin-header">
+            <h1><i class="fas fa-cogs"></i> Pannello di Amministrazione</h1>
+            <p>Gestisci le impostazioni del sistema di check-in</p>
         </div>
 
-        <div class="admin-section">
-          <h3><i class="fas fa-sliders-h"></i> Impostazioni Sistema</h3>
-          <div class="input-group">
-            <label for="currentMaxClicks">Click massimi consentiti</label>
-            <input type="number" id="currentMaxClicks" readonly class="a12" />
-          </div>
-          <div class="input-group">
-            <label for="newMaxClicks">Nuovo numero di click massimi</label>
-            <input
-              type="number"
-              id="newMaxClicks"
-              placeholder="Inserisci nuovo limite"
-              min="1"
-            />
-          </div>
+        <div class="admin-content">
+            <a href="index.html" class="back-button">
+                <i class="fas fa-arrow-left"></i> Torna alla schermata principale
+            </a>
 
-          <div class="input-group">
-            <label for="currentTimeLimit">Tempo limite sessione (minuti)</label>
-            <input type="number" id="currentTimeLimit" readonly class="a12" />
-          </div>
-          <div class="input-group">
-            <label for="newTimeLimit">Nuovo tempo limite (minuti)</label>
-            <input
-              type="number"
-              id="newTimeLimit"
-              placeholder="Inserisci nuovo limite"
-              min="1"
-            />
-          </div>
-
-          <button id="btnSettingsUpdate" class="btn">
-            <i class="fas fa-save"></i> Salva Impostazioni
-          </button>
-        </div>
-
-        <div class="admin-section">
-          <h3><i class="fas fa-clock"></i> Impostazioni Orario Check-in</h3>
-          <div class="input-group">
-            <label for="currentCheckinTimeRange">Range orario attuale</label>
-            <input
-              type="text"
-              id="currentCheckinTimeRange"
-              readonly
-              class="a12"
-            />
-          </div>
-
-          <div class="time-range-inputs">
-            <div class="input-group">
-              <label for="checkinStartTime">Orario inizio check-in</label>
-              <input type="time" id="checkinStartTime" value="14:00" />
+            <div class="admin-section">
+                <h3><i class="fas fa-key"></i> Gestione Codice Segreto</h3>
+                <div class="input-group">
+                    <label for="currentCode">Codice attuale</label>
+                    <input type="text" id="currentCode" readonly>
+                </div>
+                <div class="input-group">
+                    <label for="newCode">Nuovo codice</label>
+                    <input type="text" id="newCode" placeholder="Inserisci nuovo codice">
+                </div>
+                <button id="btnCodeUpdate" class="btn">
+                    <i class="fas fa-sync-alt"></i> Aggiorna Codice
+                </button>
             </div>
 
-            <div class="input-group">
-              <label for="checkinEndTime">Orario fine check-in</label>
-              <input type="time" id="checkinEndTime" value="22:00" />
+            <div class="admin-section">
+                <h3><i class="fas fa-sliders-h"></i> Impostazioni Sistema</h3>
+                <div class="input-group">
+                    <label for="currentMaxClicks">Click massimi consentiti</label>
+                    <input type="number" id="currentMaxClicks" readonly>
+                </div>
+                <div class="input-group">
+                    <label for="newMaxClicks">Nuovo numero de click massimi</label>
+                    <input type="number" id="newMaxClicks" placeholder="Inserisci nuovo limite" min="1">
+                </div>
+
+                <div class="input-group">
+                    <label for="currentTimeLimit">Tempo limite sessione (minuti)</label>
+                    <input type="number" id="currentTimeLimit" readonly>
+                </div>
+                <div class="input-group">
+                    <label for="newTimeLimit">Nuovo tempo limite (minuti)</label>
+                    <input type="number" id="newTimeLimit" placeholder="Inserisci nuovo limite" min="1">
+                </div>
+
+                <button id="btnSettingsUpdate" class="btn">
+                    <i class="fas fa-save"></i> Salva Impostazioni
+                </button>
             </div>
-          </div>
 
-          <div id="timeRangeError" class="admin-notification">
-            <p>
-              <i class="fas fa-exclamation-circle"></i> L'orario di fine deve
-              essere successivo all'orario di inizio
-            </p>
-          </div>
+            <div class="admin-section">
+                <h3><i class="fas fa-clock"></i> Impostazioni Orario Check-in</h3>
+                <div class="input-group">
+                    <label for="currentCheckinTimeRange">Range orario attuale</label>
+                    <input type="text" id="currentCheckinTimeRange" readonly>
+                </div>
 
-          <button id="btnUpdateCheckinTime" class="btn">
-            <i class="fas fa-clock"></i> Aggiorna Orario Check-in
-          </button>
+                <div class="time-range-inputs">
+                    <div class="input-group">
+                        <label for="checkinStartTime">Orario inizio check-in</label>
+                        <input type="time" id="checkinStartTime" value="14:00">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="checkinEndTime">Orario fine check-in</label>
+                        <input type="time" id="checkinEndTime" value="22:00">
+                    </div>
+                </div>
+
+                <div id="timeRangeError" class="admin-notification">
+                    <p><i class="fas fa-exclamation-circle"></i> L'orario di fine deve essere successivo all'orario di inizio</p>
+                </div>
+
+                <button id="btnUpdateCheckinTime" class="btn">
+                    <i class="fas fa-clock"></i> Aggiorna Orario Check-in
+                </button>
+            </div>
+
+            <div class="admin-section">
+                <h3><i class="fas fa-power-off"></i> Controllo Orario Check-in</h3>
+                <div class="input-group">
+                    <label>Stato attuale: <span id="checkinTimeStatus"></span></label>
+                </div>
+                <button id="btnToggleCheckinTime" class="btn">
+                    <i class="fas fa-toggle-on"></i> Attiva/Disattiva Controllo Orario
+                </button>
+            </div>
+
+            <div class="admin-section">
+                <h3><i class="fas fa-door-open"></i> Gestione Porte Extra</h3>
+                <div class="input-group">
+                    <label>
+                        <input type="checkbox" id="extraDoor1Visible"> Mostra Extra Door 1
+                    </label>
+                </div>
+                <div class="input-group">
+                    <label>
+                        <input type="checkbox" id="extraDoor2Visible"> Mostra Extra Door 2
+                    </label>
+                </div>
+                <button id="btnExtraDoorsVisibility" class="btn">
+                    <i class="fas fa-check"></i> Applica Visibilità
+                </button>
+            </div>
         </div>
-
-        <div class="admin-section">
-          <h3><i class="fas fa-power-off"></i> Controllo Orario Check-in</h3>
-          <div class="input-group">
-            <label>Stato attuale: <span id="checkinTimeStatus"></span></label>
-          </div>
-          <button id="btnToggleCheckinTime" class="btn">
-            <i class="fas fa-toggle-on"></i> Attiva/Disattiva Controllo Orario
-          </button>
-        </div>
-
-        <div class="admin-section" style="display: none">
-          <h3><i class="fas fa-door-open"></i> Gestione Porte Extra</h3>
-          <div class="input-group">
-            <label>
-              <input type="checkbox" id="extraDoor1Visible" /> Mostra Extra Door
-              1
-            </label>
-          </div>
-          <div class="input-group">
-            <label>
-              <input type="checkbox" id="extraDoor2Visible" /> Mostra Extra Door
-              2
-            </label>
-          </div>
-          <button id="btnExtraDoorsVisibility" class="btn">
-            <i class="fas fa-check"></i> Applica Visibilità
-          </button>
-        </div>
-      </div>
     </div>
 
     <script>
-      // Costanti
-      const ADMIN_PASSWORD = "1122";
+        // Costanti
+        const ADMIN_PASSWORD = "1122";
 
-      // Elementi DOM
-      const loginModal = document.getElementById("loginModal");
-      const adminContainer = document.getElementById("adminContainer");
-      const adminPasswordInput = document.getElementById("adminPassword");
-      const loginError = document.getElementById("loginError");
-      const btnLogin = document.getElementById("btnLogin");
+        // Elementi DOM
+        const loginModal = document.getElementById('loginModal');
+        const adminContainer = document.getElementById('adminContainer');
+        const adminPasswordInput = document.getElementById('adminPassword');
+        const loginError = document.getElementById('loginError');
+        const btnLogin = document.getElementById('btnLogin');
+        
+        const currentCodeEl = document.getElementById('currentCode');
+        const currentMaxClicksEl = document.getElementById('currentMaxClicks');
+        const currentTimeLimitEl = document.getElementById('currentTimeLimit');
+        const currentCheckinTimeRangeEl = document.getElementById('currentCheckinTimeRange');
+        const checkinTimeStatusEl = document.getElementById('checkinTimeStatus');
+        const extraDoor1VisibleEl = document.getElementById('extraDoor1Visible');
+        const extraDoor2VisibleEl = document.getElementById('extraDoor2Visible');
 
-      const currentCodeEl = document.getElementById("currentCode");
-      const currentMaxClicksEl = document.getElementById("currentMaxClicks");
-      const currentTimeLimitEl = document.getElementById("currentTimeLimit");
-      const currentCheckinTimeRangeEl = document.getElementById(
-        "currentCheckinTimeRange"
-      );
-      const checkinTimeStatusEl = document.getElementById("checkinTimeStatus");
-      const extraDoor1VisibleEl = document.getElementById("extraDoor1Visible");
-      const extraDoor2VisibleEl = document.getElementById("extraDoor2Visible");
-
-      // Carica le impostazioni all'avvio
-      document.addEventListener("DOMContentLoaded", function () {
-        // Verifica se l'utente è già autenticato
-        const isAuthenticated =
-          localStorage.getItem("adminAuthenticated") === "true";
-
-        if (isAuthenticated) {
-          // Se autenticato, nascondi il modale e mostra il contenuto
-          loginModal.classList.add("hidden");
-          adminContainer.style.display = "block";
-          loadSettings();
-        }
-
-        // Focus sul campo password
-        adminPasswordInput.focus();
-      });
-
-      // Gestione del login
-      btnLogin.addEventListener("click", function () {
-        const password = adminPasswordInput.value.trim();
-        if (password === ADMIN_PASSWORD) {
-          // Password corretta
-          localStorage.setItem("adminAuthenticated", "true");
-          loginModal.classList.add("hidden");
-          adminContainer.style.display = "block";
-          loadSettings();
-        } else {
-          // Password errata
-          loginError.style.display = "block";
-          adminPasswordInput.value = "";
-          adminPasswordInput.focus();
-
-          // Aggiungi effetto shake al modale
-          loginModal.classList.add("shake");
-          setTimeout(() => {
-            loginModal.classList.remove("shake");
-          }, 500);
-        }
-      });
-
-      // Permetti di premere Invio per effettuare il login
-      adminPasswordInput.addEventListener("keypress", function (e) {
-        if (e.key === "Enter") {
-          btnLogin.click();
-        }
-      });
-
-      // Funzione per caricare le impostazioni
-      function loadSettings() {
-        // Carica il codice segreto
-        const secretCode = localStorage.getItem("secret_code") || "2245";
-        currentCodeEl.value = secretCode;
-
-        // Carica i click massimi
-        const maxClicks = localStorage.getItem("max_clicks") || "3";
-        currentMaxClicksEl.value = maxClicks;
-        document.getElementById("newMaxClicks").value = maxClicks;
-
-        // Carica il tempo limite
-        const timeLimit = localStorage.getItem("time_limit_minutes") || "50000";
-        currentTimeLimitEl.value = timeLimit;
-        document.getElementById("newTimeLimit").value = timeLimit;
-
-        // Carica le impostazioni orario check-in
-        const checkinStartTime =
-          localStorage.getItem("checkin_start_time") || "14:00";
-        const checkinEndTime =
-          localStorage.getItem("checkin_end_time") || "22:00";
-        document.getElementById("checkinStartTime").value = checkinStartTime;
-        document.getElementById("checkinEndTime").value = checkinEndTime;
-        currentCheckinTimeRangeEl.value = `${checkinStartTime} - ${checkinEndTime}`;
-
-        // Carica lo stato del controllo orario
-        const checkinTimeEnabled = localStorage.getItem("checkin_time_enabled");
-        const isCheckinTimeEnabled =
-          checkinTimeEnabled === null ? true : checkinTimeEnabled === "true";
-
-        if (isCheckinTimeEnabled) {
-          checkinTimeStatusEl.innerHTML =
-            '<span class="status-indicator status-on"></span> Attivo';
-          document
-            .getElementById("btnToggleCheckinTime")
-            .classList.add("btn-success");
-          document.getElementById("btnToggleCheckinTime").innerHTML =
-            '<i class="fas fa-toggle-on"></i> Disattiva Controllo Orario';
-        } else {
-          checkinTimeStatusEl.innerHTML =
-            '<span class="status-indicator status-off"></span> Disattivato';
-          document
-            .getElementById("btnToggleCheckinTime")
-            .classList.add("btn-error");
-          document.getElementById("btnToggleCheckinTime").innerHTML =
-            '<i class="fas fa-toggle-off"></i> Attiva Controllo Orario';
-        }
-
-        // Carica la visibilità delle porte extra
-        try {
-          const devices = JSON.parse(localStorage.getItem("devices")) || [];
-          if (devices.length >= 4) {
-            extraDoor1VisibleEl.checked = devices[2].visible || false;
-            extraDoor2VisibleEl.checked = devices[3].visible || false;
-          }
-        } catch (e) {
-          console.error("Errore nel caricamento delle porte extra:", e);
-        }
-      }
-
-      // Aggiorna il codice segreto
-      document
-        .getElementById("btnCodeUpdate")
-        .addEventListener("click", function () {
-          const newCode = document.getElementById("newCode").value.trim();
-          if (!newCode) {
-            alert("Inserisci un codice valido");
-            return;
-          }
-
-          localStorage.setItem("secret_code", newCode);
-
-          // Aggiorna la versione del codice per forzare il reset
-          const currentVersion =
-            parseInt(localStorage.getItem("code_version")) || 1;
-          const newVersion = currentVersion + 1;
-          localStorage.setItem("code_version", newVersion.toString());
-
-          // Aggiorna un flag per notificare il cambiamento
-          localStorage.setItem("code_updated", Date.now().toString());
-
-          currentCodeEl.value = newCode;
-          document.getElementById("newCode").value = "";
-
-          alert(
-            "Codice aggiornato con successo! Tutti gli utenti dovranno inserire il nuovo codice."
-          );
+        // Carica le impostazioni all'avvio
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verifica se l'utente è già autenticato
+            const isAuthenticated = localStorage.getItem('adminAuthenticated') === 'true';
+            
+            if (isAuthenticated) {
+                // Se autenticato, nascondi il modale e mostra il contenuto
+                loginModal.classList.add('hidden');
+                adminContainer.style.display = 'block';
+                loadSettings();
+            }
+            
+            // Focus sul campo password
+            adminPasswordInput.focus();
         });
 
-      // Aggiorna le impostazioni di sistema
-      document
-        .getElementById("btnSettingsUpdate")
-        .addEventListener("click", function () {
-          const newMaxClicks = document
-            .getElementById("newMaxClicks")
-            .value.trim();
-          const newTimeLimit = document
-            .getElementById("newTimeLimit")
-            .value.trim();
-
-          if (
-            !newMaxClicks ||
-            isNaN(newMaxClicks) ||
-            parseInt(newMaxClicks) <= 0
-          ) {
-            alert("Inserisci un numero valido per i click massimi");
-            return;
-          }
-
-          if (
-            !newTimeLimit ||
-            isNaN(newTimeLimit) ||
-            parseInt(newTimeLimit) <= 0
-          ) {
-            alert("Inserisci un numero valido per il tempo limite");
-            return;
-          }
-
-          localStorage.setItem("max_clicks", newMaxClicks);
-          localStorage.setItem("time_limit_minutes", newTimeLimit);
-
-          currentMaxClicksEl.value = newMaxClicks;
-          currentTimeLimitEl.value = newTimeLimit;
-
-          alert("Impostazioni aggiornate con successo!");
-        });
-
-      // Aggiorna l'orario di check-in
-      document
-        .getElementById("btnUpdateCheckinTime")
-        .addEventListener("click", function () {
-          const newCheckinStartTime =
-            document.getElementById("checkinStartTime").value;
-          const newCheckinEndTime =
-            document.getElementById("checkinEndTime").value;
-
-          if (!newCheckinStartTime || !newCheckinEndTime) {
-            alert("Inserisci orari validi");
-            return;
-          }
-
-          // Converti in minuti per il confronto
-          const [startHours, startMinutes] = newCheckinStartTime
-            .split(":")
-            .map(Number);
-          const [endHours, endMinutes] = newCheckinEndTime
-            .split(":")
-            .map(Number);
-
-          const startTimeInMinutes = startHours * 60 + startMinutes;
-          const endTimeInMinutes = endHours * 60 + endMinutes;
-
-          // Verifica che l'orario di fine sia dopo l'orario di inizio
-          if (endTimeInMinutes <= startTimeInMinutes) {
-            document.getElementById("timeRangeError").style.display = "block";
-            return;
-          }
-
-          document.getElementById("timeRangeError").style.display = "none";
-
-          localStorage.setItem("checkin_start_time", newCheckinStartTime);
-          localStorage.setItem("checkin_end_time", newCheckinEndTime);
-
-          currentCheckinTimeRangeEl.value = `${newCheckinStartTime} - ${newCheckinEndTime}`;
-          alert("Orario di check-in aggiornato con successo!");
-        });
-
-      // Attiva/disattiva il controllo orario
-      document
-        .getElementById("btnToggleCheckinTime")
-        .addEventListener("click", function () {
-          const currentStatus = localStorage.getItem("checkin_time_enabled");
-          let newStatus;
-
-          if (currentStatus === null) {
-            newStatus = false;
-          } else {
-            newStatus = currentStatus !== "true";
-          }
-
-          localStorage.setItem("checkin_time_enabled", newStatus.toString());
-
-          if (newStatus) {
-            checkinTimeStatusEl.innerHTML =
-              '<span class="status-indicator status-on"></span> Attivo';
-            this.classList.remove("btn-error");
-            this.classList.add("btn-success");
-            this.innerHTML =
-              '<i class="fas fa-toggle-on"></i> Disattiva Controllo Orario';
-          } else {
-            checkinTimeStatusEl.innerHTML =
-              '<span class="status-indicator status-off"></span> Disattivato';
-            this.classList.remove("btn-success");
-            this.classList.add("btn-error");
-            this.innerHTML =
-              '<i class="fas fa-toggle-off"></i> Attiva Controllo Orario';
-          }
-
-          alert(
-            `Controllo orario ${
-              newStatus ? "attivato" : "disattivato"
-            } con successo!`
-          );
-        });
-
-      // Gestione visibilità porte extra
-      document
-        .getElementById("btnExtraDoorsVisibility")
-        .addEventListener("click", function () {
-          try {
-            // Carica i dispositivi esistenti o crea un array vuoto
-            let devices = JSON.parse(localStorage.getItem("devices")) || [];
-
-            // Se non ci sono dispositivi, crea la struttura base
-            if (devices.length === 0) {
-              devices = [
-                { button_id: "MainDoor", visible: true },
-                { button_id: "AptDoor", visible: true },
-                {
-                  button_id: "ExtraDoor1",
-                  visible: extraDoor1VisibleEl.checked,
-                },
-                {
-                  button_id: "ExtraDoor2",
-                  visible: extraDoor2VisibleEl.checked,
-                },
-              ];
+        // Gestione del login
+        btnLogin.addEventListener('click', function() {
+            const password = adminPasswordInput.value.trim();
+            if (password === ADMIN_PASSWORD) {
+                // Password corretta
+                localStorage.setItem('adminAuthenticated', 'true');
+                loginModal.classList.add('hidden');
+                adminContainer.style.display = 'block';
+                loadSettings();
             } else {
-              // Aggiorna solo le porte extra
-              if (devices.length > 2)
-                devices[2].visible = extraDoor1VisibleEl.checked;
-              if (devices.length > 3)
-                devices[3].visible = extraDoor2VisibleEl.checked;
+                // Password errata
+                loginError.style.display = 'block';
+                adminPasswordInput.value = '';
+                adminPasswordInput.focus();
+                
+                // Aggiungi effetto shake al modale
+                loginModal.classList.add('shake');
+                setTimeout(() => {
+                    loginModal.classList.remove('shake');
+                }, 500);
+            }
+        });
+
+        // Permetti di premere Invio per effettuare il login
+        adminPasswordInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                btnLogin.click();
+            }
+        });
+
+        // Funzione per caricare le impostazioni
+        function loadSettings() {
+            // Carica il codice segreto
+            const secretCode = localStorage.getItem('secret_code') || '2245';
+            currentCodeEl.value = secretCode;
+
+            // Carica i click massimi
+            const maxClicks = localStorage.getItem('max_clicks') || '3';
+            currentMaxClicksEl.value = maxClicks;
+            document.getElementById('newMaxClicks').value = maxClicks;
+
+            // Carica il tempo limite
+            const timeLimit = localStorage.getItem('time_limit_minutes') || '50000';
+            currentTimeLimitEl.value = timeLimit;
+            document.getElementById('newTimeLimit').value = timeLimit;
+
+            // Carica le impostazioni orario check-in
+            const checkinStartTime = localStorage.getItem('checkin_start_time') || '14:00';
+            const checkinEndTime = localStorage.getItem('checkin_end_time') || '22:00';
+            document.getElementById('checkinStartTime').value = checkinStartTime;
+            document.getElementById('checkinEndTime').value = checkinEndTime;
+            currentCheckinTimeRangeEl.value = `${checkinStartTime} - ${checkinEndTime}`;
+
+            // Carica lo stato del controllo orario
+            const checkinTimeEnabled = localStorage.getItem('checkin_time_enabled');
+            const isCheckinTimeEnabled = checkinTimeEnabled === null ? true : checkinTimeEnabled === 'true';
+            
+            if (isCheckinTimeEnabled) {
+                checkinTimeStatusEl.innerHTML = '<span class="status-indicator status-on"></span> Attivo';
+                document.getElementById('btnToggleCheckinTime').classList.add('btn-success');
+                document.getElementById('btnToggleCheckinTime').innerHTML = '<i class="fas fa-toggle-on"></i> Disattiva Controllo Orario';
+            } else {
+                checkinTimeStatusEl.innerHTML = '<span class="status-indicator status-off"></span> Disattivato';
+                document.getElementById('btnToggleCheckinTime').classList.add('btn-error');
+                document.getElementById('btnToggleCheckinTime').innerHTML = '<i class="fas fa-toggle-off"></i> Attiva Controllo Orario';
             }
 
-            // Salva nel localStorage
-            localStorage.setItem("devices", JSON.stringify(devices));
+            // Carica la visibilità delle porte extra
+            try {
+                const devices = JSON.parse(localStorage.getItem('devices')) || [];
+                if (devices.length >= 4) {
+                    extraDoor1VisibleEl.checked = devices[2].visible || false;
+                    extraDoor2VisibleEl.checked = devices[3].visible || false;
+                }
+            } catch (e) {
+                console.error('Errore nel caricamento delle porte extra:', e);
+            }
+        }
 
-            alert("Visibilità porte extra aggiornata con successo!");
-          } catch (e) {
-            console.error("Errore nel salvataggio delle porte extra:", e);
-            alert("Si è verificato un errore durante il salvataggio.");
-          }
+        // Aggiorna il codice segreto
+        document.getElementById('btnCodeUpdate').addEventListener('click', function() {
+            const newCode = document.getElementById('newCode').value.trim();
+            if (!newCode) {
+                alert('Inserisci un codice valido');
+                return;
+            }
+
+            localStorage.setItem('secret_code', newCode);
+            
+            // Aggiorna la versione del codice per forzare il reset
+            const currentVersion = parseInt(localStorage.getItem('code_version')) || 1;
+            const newVersion = currentVersion + 1;
+            localStorage.setItem('code_version', newVersion.toString());
+            
+            // Aggiungi un timestamp per forzare l'aggiornamento
+            localStorage.setItem('last_code_update', Date.now().toString());
+            
+            currentCodeEl.value = newCode;
+            document.getElementById('newCode').value = '';
+            
+            alert('Codice aggiornato con successo! Tutti gli utenti dovranno inserire il nuovo codice.');
+        });
+
+        // Aggiorna le impostazioni di sistema
+        document.getElementById('btnSettingsUpdate').addEventListener('click', function() {
+            const newMaxClicks = document.getElementById('newMaxClicks').value.trim();
+            const newTimeLimit = document.getElementById('newTimeLimit').value.trim();
+
+            if (!newMaxClicks || isNaN(newMaxClicks) || parseInt(newMaxClicks) <= 0) {
+                alert('Inserisci un numero valido per i click massimi');
+                return;
+            }
+
+            if (!newTimeLimit || isNaN(newTimeLimit) || parseInt(newTimeLimit) <= 0) {
+                alert('Inserisci un numero valido per il tempo limite');
+                return;
+            }
+
+            localStorage.setItem('max_clicks', newMaxClicks);
+            localStorage.setItem('time_limit_minutes', newTimeLimit);
+
+            currentMaxClicksEl.value = newMaxClicks;
+            currentTimeLimitEl.value = newTimeLimit;
+
+            alert('Impostazioni aggiornate con successo!');
+        });
+
+        // Aggiorna l'orario de check-in
+        document.getElementById('btnUpdateCheckinTime').addEventListener('click', function() {
+            const newCheckinStartTime = document.getElementById('checkinStartTime').value;
+            const newCheckinEndTime = document.getElementById('checkinEndTime').value;
+
+            if (!newCheckinStartTime || !newCheckinEndTime) {
+                alert('Inserisci orari validi');
+                return;
+            }
+
+            // Converti in minuti per il confronto
+            const [startHours, startMinutes] = newCheckinStartTime.split(':').map(Number);
+            const [endHours, endMinutes] = newCheckinEndTime.split(':').map(Number);
+
+            const startTimeInMinutes = startHours * 60 + startMinutes;
+            const endTimeInMinutes = endHours * 60 + endMinutes;
+
+            // Verifica che l'orario di fine sia dopo l'orario di inizio
+            if (endTimeInMinutes <= startTimeInMinutes) {
+                document.getElementById('timeRangeError').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('timeRangeError').style.display = 'none';
+
+            localStorage.setItem('checkin_start_time', newCheckinStartTime);
+            localStorage.setItem('checkin_end_time', newCheckinEndTime);
+
+            currentCheckinTimeRangeEl.value = `${newCheckinStartTime} - ${newCheckinEndTime}`;
+            alert('Orario di check-in aggiornato con successo!');
+        });
+
+        // Attiva/disattiva il controllo orario
+        document.getElementById('btnToggleCheckinTime').addEventListener('click', function() {
+            const currentStatus = localStorage.getItem('checkin_time_enabled');
+            let newStatus;
+            
+            if (currentStatus === null) {
+                newStatus = false;
+            } else {
+                newStatus = currentStatus !== 'true';
+            }
+            
+            localStorage.setItem('checkin_time_enabled', newStatus.toString());
+            
+            if (newStatus) {
+                checkinTimeStatusEl.innerHTML = '<span class="status-indicator status-on"></span> Attivo';
+                this.classList.remove('btn-error');
+                this.classList.add('btn-success');
+                this.innerHTML = '<i class="fas fa-toggle-on"></i> Disattiva Controllo Orario';
+            } else {
+                checkinTimeStatusEl.innerHTML = '<span class="status-indicator status-off"></span> Disattivato';
+                this.classList.remove('btn-success');
+                this.classList.add('btn-error');
+                this.innerHTML = '<i class="fas fa-toggle-off"></i> Attiva Controllo Orario';
+            }
+            
+            alert(`Controllo orario ${newStatus ? 'attivato' : 'disattivato'} con successo!`);
+        });
+
+        // Gestione visibilità porte extra
+        document.getElementById('btnExtraDoorsVisibility').addEventListener('click', function() {
+            try {
+                // Carica i dispositivi esistenti o crea un array vuoto
+                let devices = JSON.parse(localStorage.getItem('devices')) || [];
+                
+                // Se non ci sono dispositivi, crea la struttura base
+                if (devices.length === 0) {
+                    devices = [
+                        { button_id: "MainDoor", visible: true },
+                        { button_id: "AptDoor", visible: true },
+                        { button_id: "ExtraDoor1", visible: extraDoor1VisibleEl.checked },
+                        { button_id: "ExtraDoor2", visible: extraDoor2VisibleEl.checked }
+                    ];
+                } else {
+                    // Aggiorna solo le porte extra
+                    if (devices.length > 2) devices[2].visible = extraDoor1VisibleEl.checked;
+                    if (devices.length > 3) devices[3].visible = extraDoor2VisibleEl.checked;
+                }
+                
+                // Salva nel localStorage
+                localStorage.setItem('devices', JSON.stringify(devices));
+                
+                alert('Visibilità porte extra aggiornata con successo!');
+            } catch (e) {
+                console.error('Errore nel salvataggio delle porte extra:', e);
+                alert('Si è verificato un errore durante il salvataggio.');
+            }
         });
     </script>
-  </body>
+</body>
 </html>

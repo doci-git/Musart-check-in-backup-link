@@ -44,7 +44,6 @@ const SECRET_KEY = "musart_secret_123_fixed_key";
 // Variabili per l'orario di check-in (range)
 let CHECKIN_START_TIME = localStorage.getItem("checkin_start_time") || "14:00";
 let CHECKIN_END_TIME = localStorage.getItem("checkin_end_time") || "22:00";
-// Default: se non è presente in localStorage, manteniamo il comportamento di prima (abilitato)
 let CHECKIN_TIME_ENABLED = localStorage.getItem("checkin_time_enabled");
 if (CHECKIN_TIME_ENABLED === null) {
   CHECKIN_TIME_ENABLED = true;
@@ -54,6 +53,7 @@ if (CHECKIN_TIME_ENABLED === null) {
 
 // Variabili di stato
 let timeCheckInterval;
+let codeCheckInterval;
 let currentDevice = null;
 
 // Gestione versione codice per forzare il reset alla modifica
@@ -151,6 +151,7 @@ async function checkTimeLimit() {
 
 function showFatalError(message) {
   clearInterval(timeCheckInterval);
+  clearInterval(codeCheckInterval);
   document.body.innerHTML = `
         <div style="
           position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
@@ -163,6 +164,7 @@ function showFatalError(message) {
 
 function showSessionExpired() {
   clearInterval(timeCheckInterval);
+  clearInterval(codeCheckInterval);
 
   document.getElementById("expiredOverlay").classList.remove("hidden");
   document.getElementById("controlPanel").classList.add("hidden");
@@ -188,12 +190,7 @@ function showSessionExpired() {
 // GESTIONE ORARIO DI CHECK-IN (RANGE)
 // =============================================
 
-/**
- * Verifica se l'orario corrente è nel range di check-in configurato
- * @returns {boolean} True se è possibile fare check-in
- */
 function isCheckinTime() {
-  // Se il controllo orario è disattivato, consentiamo sempre il check-in
   if (!CHECKIN_TIME_ENABLED) return true;
 
   const now = new Date();
@@ -213,19 +210,11 @@ function isCheckinTime() {
   );
 }
 
-/**
- * Formatta l'orario per la visualizzazione
- * @param {string} timeString - Stringa orario nel formato "HH:MM"
- * @returns {string} Orario formattato
- */
 function formatTime(timeString) {
   const [hours, minutes] = timeString.split(":");
   return `${hours}:${minutes}`;
 }
 
-/**
- * Aggiorna la visualizzazione del range orario di check-in
- */
 function updateCheckinTimeDisplay() {
   const startEl = document.getElementById("checkinStartDisplay");
   const endEl = document.getElementById("checkinEndDisplay");
@@ -241,7 +230,6 @@ function updateCheckinTimeDisplay() {
   if (currentStart) currentStart.textContent = formatTime(CHECKIN_START_TIME);
   if (currentEnd) currentEnd.textContent = formatTime(CHECKIN_END_TIME);
 
-  // Aggiorna lo stato corrente
   const statusElement = document.getElementById("currentTimeStatus");
   if (statusElement) {
     if (!CHECKIN_TIME_ENABLED) {
@@ -264,14 +252,12 @@ function updateCheckinTimeDisplay() {
       const endTimeInMinutes = endHours * 60 + endMinutes;
 
       if (currentTimeInMinutes < startTimeInMinutes) {
-        // Prima dell'orario di inizio
         const timeDiff = startTimeInMinutes - currentTimeInMinutes;
         const hoursLeft = Math.floor(timeDiff / 60);
         const minutesLeft = timeDiff % 60;
 
         statusElement.innerHTML = `<i class="fas fa-clock" style="color:orange;"></i> Check-in will be available in ${hoursLeft}h ${minutesLeft}m`;
       } else {
-        // Dopo l'orario di fine
         const tomorrow = new Date(now);
         tomorrow.setDate(tomorrow.getDate() + 1);
         tomorrow.setHours(startHours, startMinutes, 0, 0);
@@ -288,16 +274,10 @@ function updateCheckinTimeDisplay() {
   }
 }
 
-/**
- * Mostra il popup per check-in troppo presto
- */
 function showEarlyCheckinPopup() {
   document.getElementById("earlyCheckinPopup").style.display = "flex";
 }
 
-/**
- * Chiude il popup per check-in troppo presto
- */
 function closeEarlyCheckinPopup() {
   document.getElementById("earlyCheckinPopup").style.display = "none";
 }
@@ -385,11 +365,99 @@ function updateDoorVisibility() {
 }
 
 // =============================================
+// GESTIONE CAMBIAMENTO CODICE
+// =============================================
+
+function setupCodeChangeListener() {
+  // Controlla periodicamente se il codice è cambiato
+  codeCheckInterval = setInterval(() => {
+    checkCodeVersion();
+  }, 2000);
+
+  // Ascolta anche gli eventi di storage (per cambiamenti tra tab)
+  window.addEventListener("storage", function (e) {
+    if (e.key === "code_version" || e.key === "last_code_update") {
+      checkCodeVersion();
+    }
+  });
+}
+
+function checkCodeVersion() {
+  const savedVersion = parseInt(localStorage.getItem("code_version")) || 1;
+  if (savedVersion > currentCodeVersion) {
+    // Il codice è cambiato, resetta tutto
+    currentCodeVersion = savedVersion;
+    CORRECT_CODE = localStorage.getItem("secret_code") || "2245";
+
+    clearStorage("usage_start_time");
+    clearStorage("usage_hash");
+    DEVICES.forEach((device) => {
+      clearStorage(device.storage_key);
+    });
+
+    document.getElementById("controlPanel").style.display = "none";
+    document.getElementById("authCode").style.display = "block";
+    document.getElementById("auth-form").style.display = "block";
+    document.getElementById("btnCheckCode").style.display = "block";
+    document.getElementById("important").style.display = "block";
+
+    // Mostra una notifica
+    showNotification(
+      "Il codice di accesso è stato aggiornato. Inserisci il nuovo codice."
+    );
+  }
+}
+
+function showNotification(message) {
+  // Rimuovi notifiche precedenti
+  const existingNotification = document.getElementById(
+    "codeChangeNotification"
+  );
+  if (existingNotification) {
+    existingNotification.remove();
+  }
+
+  // Crea una nuova notifica
+  const notification = document.createElement("div");
+  notification.id = "codeChangeNotification";
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #FF5A5F;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  `;
+
+  notification.innerHTML = `
+    <i class="fas fa-info-circle"></i>
+    <span>${message}</span>
+    <button onclick="this.parentElement.remove()" style="background:none; border:none; color:white; margin-left:10px; cursor:pointer;">
+      <i class="fas fa-times"></i>
+    </button>
+  `;
+
+  document.body.appendChild(notification);
+
+  // Rimuovi automaticamente dopo 5 secondi
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.remove();
+    }
+  }, 5000);
+}
+
+// =============================================
 // GESTIONE POPUP E INTERAZIONI
 // =============================================
 
 function showConfirmationPopup(device) {
-  // Verifica l'orario di check-in prima di mostrare la conferma
   if (!isCheckinTime()) {
     showEarlyCheckinPopup();
     return;
@@ -449,7 +517,6 @@ function closePopup(buttonId) {
 async function activateDevice(device) {
   if (await checkTimeLimit()) return;
 
-  // Verifica l'orario di check-in
   if (!isCheckinTime()) {
     showEarlyCheckinPopup();
     return;
@@ -538,7 +605,6 @@ async function handleCodeSubmit() {
   document.getElementById("btnCheckCode").style.display = "none";
   document.getElementById("important").style.display = "none";
 
-  // Mostra informazioni sull'orario di check-in
   document.getElementById("checkinTimeInfo").style.display = "block";
   updateCheckinTimeDisplay();
 
@@ -546,97 +612,11 @@ async function handleCodeSubmit() {
   updateStatusBar();
 }
 
-function setupCodeChangeListener() {
-  // Ascolta i cambiamenti nel localStorage
-  window.addEventListener("storage", function (e) {
-    if (e.key === "code_updated") {
-      handleCodeChange();
-    }
-  });
-
-  // Controlla anche all'avvio se il codice è cambiato
-  const lastUpdate = localStorage.getItem("code_updated");
-  if (lastUpdate) {
-    handleCodeChange();
-  }
-}
-
-function handleCodeChange() {
-  const savedVersion = parseInt(localStorage.getItem("code_version")) || 1;
-  if (savedVersion > currentCodeVersion) {
-    currentCodeVersion = savedVersion;
-    CORRECT_CODE = localStorage.getItem("secret_code") || "2245";
-
-    clearStorage("usage_start_time");
-    clearStorage("usage_hash");
-    DEVICES.forEach((device) => {
-      clearStorage(device.storage_key);
-    });
-
-    document.getElementById("controlPanel").style.display = "none";
-    document.getElementById("authCode").style.display = "block";
-    document.getElementById("auth-form").style.display = "block";
-    document.getElementById("btnCheckCode").style.display = "block";
-    document.getElementById("important").style.display = "block";
-
-    // Mostra una notifica
-    showNotification(
-      "Il codice di accesso è stato aggiornato. Inserisci il nuovo codice."
-    );
-  }
-}
-
-function showNotification(message) {
-  // Rimuovi notifiche precedenti
-  const existingNotification = document.getElementById(
-    "codeChangeNotification"
-  );
-  if (existingNotification) {
-    existingNotification.remove();
-  }
-
-  // Crea una nuova notifica
-  const notification = document.createElement("div");
-  notification.id = "codeChangeNotification";
-  notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #FF5A5F;
-        color: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    `;
-
-  notification.innerHTML = `
-        <i class="fas fa-info-circle"></i>
-        <span>${message}</span>
-        <button onclick="this.parentElement.remove()" style="background:none; border:none; color:white; margin-left:10px; cursor:pointer;">
-            <i class="fas fa-times"></i>
-        </button>
-    `;
-
-  document.body.appendChild(notification);
-
-  // Rimuovi automaticamente dopo 5 secondi
-  setTimeout(() => {
-    if (notification.parentElement) {
-      notification.remove();
-    }
-  }, 5000);
-}
-
 // =============================================
 // INIZIALIZZAZIONE DELL'APPLICAZIONE
 // =============================================
 
 async function init() {
-  // Verifica se la versione del codice è cambiata
   const savedCodeVersion =
     parseInt(localStorage.getItem(CODE_VERSION_KEY)) || 1;
   if (savedCodeVersion < currentCodeVersion) {
@@ -654,7 +634,6 @@ async function init() {
     document.getElementById("important").style.display = "block";
   }
 
-  // Configura gli event listener
   const btnCheck = document.getElementById("btnCheckCode");
   if (btnCheck) btnCheck.addEventListener("click", handleCodeSubmit);
 
@@ -698,7 +677,6 @@ async function init() {
       document.getElementById("btnCheckCode").style.display = "none";
       document.getElementById("important").style.display = "none";
 
-      // Mostra informazioni sull'orario di check-in
       document.getElementById("checkinTimeInfo").style.display = "block";
       updateCheckinTimeDisplay();
 
@@ -707,8 +685,10 @@ async function init() {
     }
   }
 
-  // Aggiorna la visibilità delle porte
   updateDoorVisibility();
+
+  // Configura l'ascolto per i cambiamenti del codice
+  setupCodeChangeListener();
 
   timeCheckInterval = setInterval(async () => {
     const expired = await checkTimeLimit();
@@ -718,14 +698,11 @@ async function init() {
     }
   }, 1000);
 
-  // Aggiorna l'orario ogni minuto
   setInterval(updateCheckinTimeDisplay, 60000);
 
   document.addEventListener("contextmenu", (e) => e.preventDefault());
 
-  // Inizializza la visualizzazione dell'orario
   updateCheckinTimeDisplay();
-  setupCodeChangeListener();
 }
 
 // =============================================
@@ -733,3 +710,13 @@ async function init() {
 // =============================================
 
 document.addEventListener("DOMContentLoaded", init);
+
+// Pulisci gli intervalli quando la pagina viene chiusa
+window.addEventListener("beforeunload", function () {
+  if (timeCheckInterval) {
+    clearInterval(timeCheckInterval);
+  }
+  if (codeCheckInterval) {
+    clearInterval(codeCheckInterval);
+  }
+});
