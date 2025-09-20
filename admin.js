@@ -15,22 +15,8 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
-let firebaseUser = null;
-
-firebase.auth().onAuthStateChanged(function (user) {
-  firebaseUser = user;
-  if (user) {
-    console.log("Admin autenticato:", user.uid);
-  } else {
-    console.log("Admin non loggato");
-  }
-});
-
 // Costanti
-
 const ADMIN_PASSWORD = "1122";
-
-
 
 // Elementi DOM
 const loginModal = document.getElementById("loginModal");
@@ -230,7 +216,7 @@ document
     const startTimeInMinutes = startHours * 60 + startMinutes;
     const endTimeInMinutes = endHours * 60 + endMinutes;
 
-    // Verifica che l'orario di fine sia dopo l'orario di inizio
+    // Verifica che l'orario de fine sia dopo l'orario di inizio
     if (endTimeInMinutes <= startTimeInMinutes) {
       document.getElementById("timeRangeError").style.display = "block";
       return;
@@ -388,7 +374,7 @@ function saveSecureLink(linkId, expirationTime, maxUsage, expirationHours) {
     status: "active",
   };
 
-  // Salva sempre su Firebase senza controllare l'utente
+  // Salva su Firebase
   database
     .ref("secure_links/" + linkId)
     .set(linkData)
@@ -399,16 +385,22 @@ function saveSecureLink(linkId, expirationTime, maxUsage, expirationHours) {
     })
     .catch((error) => {
       console.error("Errore nel salvataggio del link:", error);
+      // Fallback al localStorage se Firebase non funziona
+      const secureLinks = JSON.parse(
+        localStorage.getItem("secure_links") || "{}"
+      );
+      secureLinks[linkId] = linkData;
+      localStorage.setItem("secure_links", JSON.stringify(secureLinks));
+      updateActiveLinksList();
+      updateLinkStatistics();
     });
 }
 
 // Aggiorna la lista dei link attivi
 function updateActiveLinksList() {
   const container = document.getElementById("activeLinksList");
-  container.innerHTML =
-    '<p style="color: #666; text-align: center;">Caricamento...</p>';
 
-  // Recupera i link da Firebase
+  // Prima prova a recuperare da Firebase
   database
     .ref("secure_links")
     .orderByChild("created")
@@ -493,11 +485,87 @@ function updateActiveLinksList() {
         });
     })
     .catch((error) => {
-      console.error("Errore nel recupero dei link:", error);
-      container.innerHTML =
-        '<p style="color: #666; text-align: center;">Errore nel caricamento</p>';
+      console.error("Errore nel recupero dei link da Firebase:", error);
+      // Fallback al localStorage
+      const secureLinks = JSON.parse(
+        localStorage.getItem("secure_links") || "{}"
+      );
+      const activeLinks = Object.values(secureLinks).filter(
+        (link) => link.status === "active" && link.expiration > Date.now()
+      );
+
+      if (activeLinks.length === 0) {
+        container.innerHTML =
+          '<p style="color: #666; text-align: center;">Nessun link attivo</p>';
+        return;
+      }
+
+      container.innerHTML = "";
+      activeLinks
+        .sort((a, b) => b.created - a.created)
+        .forEach((link) => {
+          const linkElement = document.createElement("div");
+          linkElement.style.cssText = `
+          padding: 10px;
+          margin: 8px 0;
+          background: #f8f9fa;
+          border-radius: 6px;
+          border-left: 4px solid var(--success);
+        `;
+
+          const expiresIn = Math.max(
+            0,
+            Math.floor((link.expiration - Date.now()) / (1000 * 60 * 60))
+          );
+          const usageText = `${link.usedCount}/${link.maxUsage} utilizzi`;
+
+          linkElement.innerHTML = `
+          <div style="font-size: 11px; color: #666;">
+            Creato: ${new Date(link.created).toLocaleString("it-IT")}
+          </div>
+          <div style="font-weight: bold; margin: 3px 0; color: var(--dark);">
+            Scade in: ${expiresIn}h • ${usageText}
+          </div>
+          <div style="font-size: 12px; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px;">
+            <a href="${
+              window.location.origin +
+              window.location.pathname.replace("admin.html", "index.html")
+            }?token=${link.id}" 
+               target="_blank" style="color: var(--primary);">
+               ${link.id}
+            </a>
+          </div>
+          <div style="display: flex; gap: 5px;">
+            <button onclick="copySecureLink('${link.id}')" style="
+                background: var(--primary);
+                color: white;
+                border: none;
+                padding: 4px 8px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 11px;
+            ">
+                <i class="fas fa-copy"></i> Copia
+            </button>
+            <button onclick="revokeSecureLink('${link.id}')" style="
+                background: var(--error);
+                color: white;
+                border: none;
+                padding: 4px 8px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 11px;
+            ">
+                <i class="fas fa-ban"></i> Revoca
+            </button>
+          </div>
+        `;
+
+          container.appendChild(linkElement);
+        });
     });
 }
+
 // Copia link sicuro
 function copySecureLink(linkId) {
   const baseUrl = window.location.origin + window.location.pathname;
@@ -515,46 +583,35 @@ function copySecureLink(linkId) {
 }
 
 // Revoca link
+// Revoca link
 function revokeSecureLink(linkId) {
-  database
-    .ref("secure_links/" + linkId)
-    .update({
-      status: "revoked",
-      expiration: Date.now(),
-    })
-    .then(() => {
+  // Prima prova a revocare su Firebase
+  database.ref('secure_links/' + linkId).update({
+    status: 'revoked',
+    expiration: Date.now()
+  })
+  .then(() => {
+    updateActiveLinksList();
+    updateLinkStatistics();
+    alert("Link revocato con successo!");
+  })
+  .catch((error) => {
+    console.error('Errore nella revoca del link su Firebase:', error);
+    // Fallback al localStorage
+    const secureLinks = JSON.parse(localStorage.getItem("secure_links") || "{}");
+    if (secureLinks[linkId]) {
+      secureLinks[linkId].status = "revoked";
+      secureLinks[linkId].expiration = Date.now();
+      localStorage.setItem("secure_links", JSON.stringify(secureLinks));
       updateActiveLinksList();
       updateLinkStatistics();
       alert("Link revocato con successo!");
-    })
-    .catch((error) => {
-      console.error("Errore nella revoca del link:", error);
-      alert("Si è verificato un errore durante la revoca del link.");
-    });
-}
-
-// Verifica periodicamente i link scaduti
-function checkExpiredLinks() {
-  const secureLinks = JSON.parse(localStorage.getItem("secure_links") || "{}");
-  let updated = false;
-
-  Object.keys(secureLinks).forEach((linkId) => {
-    const link = secureLinks[linkId];
-    if (link.expiration < Date.now() && link.status === "active") {
-      secureLinks[linkId].status = "expired";
-      updated = true;
     }
   });
-
-  if (updated) {
-    localStorage.setItem("secure_links", JSON.stringify(secureLinks));
-    updateActiveLinksList();
-    updateLinkStatistics();
-  }
 }
-
 // Aggiorna le statistiche
 function updateLinkStatistics() {
+  // Prima prova a recuperare da Firebase
   database
     .ref("secure_links")
     .once("value")
@@ -576,7 +633,26 @@ function updateLinkStatistics() {
       ).length;
     })
     .catch((error) => {
-      console.error("Errore nel recupero delle statistiche:", error);
+      console.error(
+        "Errore nel recupero delle statistiche da Firebase:",
+        error
+      );
+      // Fallback al localStorage
+      const secureLinks = JSON.parse(
+        localStorage.getItem("secure_links") || "{}"
+      );
+      const links = Object.values(secureLinks);
+
+      document.getElementById("totalLinks").textContent = links.length;
+      document.getElementById("activeLinks").textContent = links.filter(
+        (l) => l.status === "active" && l.expiration > Date.now()
+      ).length;
+      document.getElementById("usedLinks").textContent = links.filter(
+        (l) => l.status === "used"
+      ).length;
+      document.getElementById("expiredLinks").textContent = links.filter(
+        (l) => l.status === "expired" || l.status === "revoked"
+      ).length;
     });
 }
 
@@ -584,6 +660,6 @@ function updateLinkStatistics() {
 document.addEventListener("DOMContentLoaded", function () {
   updateActiveLinksList();
   updateLinkStatistics();
-  setInterval(checkExpiredLinks, 60000); // Controlla ogni minuto
+  setInterval(updateActiveLinksList, 60000); // Aggiorna ogni minuto
   setInterval(updateLinkStatistics, 5000); // Aggiorna stats ogni 5 secondi
 });
