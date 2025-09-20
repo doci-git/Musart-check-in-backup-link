@@ -15,7 +15,21 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
+let firebaseUser = null;
+
+firebase.auth().onAuthStateChanged(function (user) {
+  firebaseUser = user;
+  if (user) {
+    console.log("Admin autenticato:", user.uid);
+  } else {
+    console.log("Admin non loggato");
+  }
+});
+
 // Costanti
+
+const ADMIN_PASSWORD = "1122";
+
 
 
 // Elementi DOM
@@ -363,7 +377,6 @@ function generateUniqueId() {
 }
 
 // Salva i dati del link sicuro
-// Nel file admin.html, modifica la funzione saveSecureLink
 function saveSecureLink(linkId, expirationTime, maxUsage, expirationHours) {
   const linkData = {
     id: linkId,
@@ -375,20 +388,18 @@ function saveSecureLink(linkId, expirationTime, maxUsage, expirationHours) {
     status: "active",
   };
 
-  if (firebaseUser) {
-    // Salva su Firebase
-    database
-      .ref("secure_links/" + linkId)
-      .set(linkData)
-      .then(() => {
-        console.log("Link salvato su Firebase");
-        updateActiveLinksList();
-        updateLinkStatistics();
-      })
-      .catch((error) => {
-        console.error("Errore nel salvataggio del link:", error);
-      });
-  }
+  // Salva sempre su Firebase senza controllare l'utente
+  database
+    .ref("secure_links/" + linkId)
+    .set(linkData)
+    .then(() => {
+      console.log("Link salvato su Firebase");
+      updateActiveLinksList();
+      updateLinkStatistics();
+    })
+    .catch((error) => {
+      console.error("Errore nel salvataggio del link:", error);
+    });
 }
 
 // Aggiorna la lista dei link attivi
