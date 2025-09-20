@@ -1,3 +1,24 @@
+// Configurazione Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyCuy3Sak96soCla7b5Yb5wmkdVfMqAXmok",
+  authDomain: "check-in-4e0e9.firebaseapp.com",
+  databaseURL:
+    "https://check-in-4e0e9-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "check-in-4e0e9",
+  storageBucket: "check-in-4e0e9.firebasestorage.app",
+  messagingSenderId: "723880990177",
+  appId: "1:723880990177:web:f002733b2cc2e50d172ea0",
+  measurementId: "G-H97GB9L4F5",
+};
+
+// Inizializza Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+// Variabile per tracciare la sessione token
+let isTokenSession = false;
+let currentTokenId = null;
+
 const DEVICES = [
   {
     id: "e4b063f0c38c",
@@ -32,82 +53,85 @@ const DEVICES = [
   },
 ];
 
-
 // Variabile globale per il controllo dei link
 let CODE_CHECK_INTERVAL;
 let LINK_CHECK_INTERVAL;
 
 function setupCodeChangeListener() {
-    // Controlla periodicamente se il codice è cambiato
-    CODE_CHECK_INTERVAL = setInterval(() => {
-        checkCodeVersion();
-    }, 2000);
-    
-    // Controlla periodicamente i link scaduti
-    LINK_CHECK_INTERVAL = setInterval(() => {
-        checkExpiredLinks();
-    }, 60000);
-    
-    // Ascolta anche gli eventi di storage (per cambiamenti tra tab)
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'code_version' || e.key === 'last_code_update') {
-            checkCodeVersion();
-        }
-    });
+  // Controlla periodicamente se il codice è cambiato
+  CODE_CHECK_INTERVAL = setInterval(() => {
+    checkCodeVersion();
+  }, 2000);
+
+  // Controlla periodicamente i link scaduti
+  LINK_CHECK_INTERVAL = setInterval(() => {
+    checkExpiredLinks();
+  }, 60000);
+
+  // Ascolta anche gli eventi di storage (per cambiamenti tra tab)
+  window.addEventListener("storage", function (e) {
+    if (e.key === "code_version" || e.key === "last_code_update") {
+      checkCodeVersion();
+    }
+  });
 }
 
 function checkCodeVersion() {
-    const savedVersion = parseInt(localStorage.getItem('code_version')) || 1;
-    if (savedVersion > currentCodeVersion) {
-        // Il codice è cambiato, resetta tutto
-        currentCodeVersion = savedVersion;
-        CORRECT_CODE = localStorage.getItem("secret_code") || "2245";
-        
-        clearStorage("usage_start_time");
-        clearStorage("usage_hash");
-        DEVICES.forEach((device) => {
-            clearStorage(device.storage_key);
-        });
+  const savedVersion = parseInt(localStorage.getItem("code_version")) || 1;
+  if (savedVersion > currentCodeVersion) {
+    // Il codice è cambiato, resetta tutto
+    currentCodeVersion = savedVersion;
+    CORRECT_CODE = localStorage.getItem("secret_code") || "2245";
 
-        document.getElementById("controlPanel").style.display = "none";
-        document.getElementById("authCode").style.display = "block";
-        document.getElementById("auth-form").style.display = "block";
-        document.getElementById("btnCheckCode").style.display = "block";
-        document.getElementById("important").style.display = "block";
-        
-        // Mostra una notifica
-        showNotification("Il codice di accesso è stato aggiornato. Inserisci il nuovo codice.");
-    }
+    clearStorage("usage_start_time");
+    clearStorage("usage_hash");
+    DEVICES.forEach((device) => {
+      clearStorage(device.storage_key);
+    });
+
+    document.getElementById("controlPanel").style.display = "none";
+    document.getElementById("authCode").style.display = "block";
+    document.getElementById("auth-form").style.display = "block";
+    document.getElementById("btnCheckCode").style.display = "block";
+    document.getElementById("important").style.display = "block";
+
+    // Mostra una notifica
+    showNotification(
+      "Il codice di accesso è stato aggiornato. Inserisci il nuovo codice."
+    );
+  }
 }
 
 function checkExpiredLinks() {
-    const secureLinks = JSON.parse(localStorage.getItem('secure_links') || '{}');
-    let updated = false;
-    
-    Object.keys(secureLinks).forEach(linkId => {
-        const link = secureLinks[linkId];
-        if (link.expiration < Date.now() && link.status === 'active') {
-            secureLinks[linkId].status = 'expired';
-            updated = true;
-        }
-    });
-    
-    if (updated) {
-        localStorage.setItem('secure_links', JSON.stringify(secureLinks));
+  const secureLinks = JSON.parse(localStorage.getItem("secure_links") || "{}");
+  let updated = false;
+
+  Object.keys(secureLinks).forEach((linkId) => {
+    const link = secureLinks[linkId];
+    if (link.expiration < Date.now() && link.status === "active") {
+      secureLinks[linkId].status = "expired";
+      updated = true;
     }
+  });
+
+  if (updated) {
+    localStorage.setItem("secure_links", JSON.stringify(secureLinks));
+  }
 }
 
 function showNotification(message) {
-    // Rimuovi notifiche precedenti
-    const existingNotification = document.getElementById('codeChangeNotification');
-    if (existingNotification) {
-        existingNotification.remove();
-    }
-    
-    // Crea una nuova notifica
-    const notification = document.createElement('div');
-    notification.id = 'codeChangeNotification';
-    notification.style.cssText = `
+  // Rimuovi notifiche precedenti
+  const existingNotification = document.getElementById(
+    "codeChangeNotification"
+  );
+  if (existingNotification) {
+    existingNotification.remove();
+  }
+
+  // Crea una nuova notifica
+  const notification = document.createElement("div");
+  notification.id = "codeChangeNotification";
+  notification.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
@@ -121,33 +145,33 @@ function showNotification(message) {
         align-items: center;
         gap: 10px;
     `;
-    
-    notification.innerHTML = `
+
+  notification.innerHTML = `
         <i class="fas fa-info-circle"></i>
         <span>${message}</span>
         <button onclick="this.parentElement.remove()" style="background:none; border:none; color:white; margin-left:10px; cursor:pointer;">
             <i class="fas fa-times"></i>
         </button>
     `;
-    
-    document.body.appendChild(notification);
-    
-    // Rimuovi automaticamente dopo 5 secondi
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.remove();
-        }
-    }, 5000);
+
+  document.body.appendChild(notification);
+
+  // Rimuovi automaticamente dopo 5 secondi
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.remove();
+    }
+  }, 5000);
 }
 
 // Pulisci gli intervalli quando la pagina viene chiusa
-window.addEventListener('beforeunload', function() {
-    if (CODE_CHECK_INTERVAL) {
-        clearInterval(CODE_CHECK_INTERVAL);
-    }
-    if (LINK_CHECK_INTERVAL) {
-        clearInterval(LINK_CHECK_INTERVAL);
-    }
+window.addEventListener("beforeunload", function () {
+  if (CODE_CHECK_INTERVAL) {
+    clearInterval(CODE_CHECK_INTERVAL);
+  }
+  if (LINK_CHECK_INTERVAL) {
+    clearInterval(LINK_CHECK_INTERVAL);
+  }
 });
 
 // Configurazioni con valori di default
@@ -244,6 +268,11 @@ async function setUsageStartTime() {
 }
 
 async function checkTimeLimit() {
+  // Se è una sessione token, non controllare il limite di tempo globale
+  if (window.isTokenSession) {
+    return false;
+  }
+
   const startTime = getStorage("usage_start_time");
   const storedHash = getStorage("usage_hash");
 
@@ -280,7 +309,14 @@ function showFatalError(message) {
         </div>`;
 }
 
+// Modifica la funzione showSessionExpired per distinguere tra sessioni normali e token
 function showSessionExpired() {
+  // Se è una sessione token, usa la gestione specifica già implementata
+  if (window.isTokenSession) {
+    return;
+  }
+
+  // Altrimenti, usa la gestione tradizionale per sessioni normali
   clearInterval(timeCheckInterval);
   clearInterval(codeCheckInterval);
 
@@ -730,6 +766,228 @@ async function handleCodeSubmit() {
   updateStatusBar();
 }
 
+// Funzione per verificare e gestire i token
+async function handleSecureToken() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get("token");
+
+  if (!token) {
+    // Sessione normale - nessun token
+    isTokenSession = false;
+    return false;
+  }
+
+  try {
+    // Verifica il token su Firebase
+    const snapshot = await database.ref("secure_links/" + token).once("value");
+
+    if (!snapshot.exists()) {
+      showTokenError("Token non valido");
+      cleanUrl();
+      return false;
+    }
+
+    const linkData = snapshot.val();
+    const isValid = validateSecureToken(linkData);
+
+    if (!isValid.valid) {
+      showTokenError(isValid.reason);
+      cleanUrl();
+      return false;
+    }
+
+    // Token valido - imposta sessione token
+    isTokenSession = true;
+    currentTokenId = token;
+
+    // Compila automaticamente il codice
+    const authCodeInput = document.getElementById("authCode");
+    if (authCodeInput) {
+      const codeSnapshot = await database
+        .ref("settings/secret_code")
+        .once("value");
+      const currentCode = codeSnapshot.val() || "2245";
+      authCodeInput.value = currentCode;
+
+      // Mostra notifica
+      showTokenNotification(isValid.remainingUses);
+
+      // Incrementa il contatore di utilizzi
+      await incrementTokenUsage(token, linkData);
+
+      // Pulisci l'URL
+      cleanUrl();
+
+      // Avvia il controllo di scadenza per il token
+      startTokenExpirationCheck(linkData.expiration);
+
+      return true;
+    }
+  } catch (error) {
+    console.error("Errore nella verifica del token:", error);
+    showTokenError("Errore di verifica");
+    cleanUrl();
+  }
+
+  return false;
+}
+
+// Verifica la validità del token
+function validateSecureToken(linkData) {
+  try {
+    if (!linkData) {
+      return { valid: false, reason: "Token non valido" };
+    }
+
+    if (linkData.status !== "active") {
+      return { valid: false, reason: "Token revocato" };
+    }
+
+    if (linkData.expiration < Date.now()) {
+      return { valid: false, reason: "Token scaduto" };
+    }
+
+    if (linkData.usedCount >= linkData.maxUsage) {
+      return { valid: false, reason: "Utilizzi esauriti" };
+    }
+
+    const remainingUses = linkData.maxUsage - linkData.usedCount;
+    return { valid: true, remainingUses: remainingUses };
+  } catch (error) {
+    return { valid: false, reason: "Errore di verifica" };
+  }
+}
+
+// Incrementa il contatore di utilizzi
+async function incrementTokenUsage(token, linkData) {
+  const newUsedCount = linkData.usedCount + 1;
+  let newStatus = "active";
+
+  // Se raggiunge il massimo, marca come utilizzato
+  if (newUsedCount >= linkData.maxUsage) {
+    newStatus = "used";
+  }
+
+  try {
+    // Aggiorna su Firebase
+    await database.ref("secure_links/" + token).update({
+      usedCount: newUsedCount,
+      status: newStatus,
+    });
+  } catch (error) {
+    console.error("Errore nell'aggiornamento del token:", error);
+  }
+}
+
+// Mostra notifica di token valido
+function showTokenNotification(remainingUses) {
+  const notification = document.createElement("div");
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--success);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 300px;
+  `;
+
+  notification.innerHTML = `
+    <i class="fas fa-check-circle"></i>
+    <div>
+      <div>Accesso autorizzato tramite link sicuro</div>
+      <div style="font-size: 12px; opacity: 0.9;">Utilizzi rimanenti: ${remainingUses}</div>
+    </div>
+    <button onclick="this.parentElement.remove()" style="
+      background: none;
+      border: none;
+      color: white;
+      margin-left: 10px;
+      cursor: pointer;
+    ">
+      <i class="fas fa-times"></i>
+    </button>
+  `;
+
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.remove();
+    }
+  }, 5000);
+}
+
+// Mostra errore token
+function showTokenError(reason) {
+  const notification = document.createElement("div");
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--error);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 300px;
+  `;
+
+  notification.innerHTML = `
+    <i class="fas fa-exclamation-triangle"></i>
+    <div>
+      <div>Link non valido</div>
+      <div style="font-size: 12px; opacity: 0.9;">Motivo: ${reason}</div>
+    </div>
+    <button onclick="this.parentElement.remove()" style="
+      background: none;
+      border: none;
+      color: white;
+      margin-left: 10px;
+      cursor: pointer;
+    ">
+      <i class="fas fa-times"></i>
+    </button>
+  `;
+
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.remove();
+    }
+  }, 5000);
+}
+
+function cleanUrl() {
+  if (window.history.replaceState) {
+    const cleanUrl = window.location.origin + window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+}
+
+// Avvia il controllo di scadenza per il token
+function startTokenExpirationCheck(expirationTime) {
+  const checkTokenExpiration = setInterval(() => {
+    if (Date.now() > expirationTime) {
+      clearInterval(checkTokenExpiration);
+      if (isTokenSession) {
+        showSessionExpired();
+      }
+    }
+  }, 1000); // Controlla ogni secondo
+}
+
 // =============================================
 // INIZIALIZZAZIONE DELL'APPLICAZIONE
 // =============================================
@@ -804,6 +1062,54 @@ async function init() {
   }
 
   updateDoorVisibility();
+ 
+
+  
+  // Controlla se è una sessione token
+  if (window.isTokenSession) {
+    // Per sessioni token, usa un controllo di scadenza diverso
+    console.log("Sessione token attiva - controllo scadenza disabilitato");
+  } else {
+    // Per sessioni normali, mantieni il controllo tradizionale
+    timeCheckInterval = setInterval(async () => {
+      const expired = await checkTimeLimit();
+      if (!expired) {
+        await updateGlobalCodeVersion();
+        updateCheckinTimeDisplay();
+      }
+    }, 1000);
+  }
+  
+  const hasToken = await handleSecureToken();
+
+  // ... resto del codice init() esistente ...
+
+  // Se è una sessione token, modifica il comportamento
+  if (isTokenSession) {
+    // Nascondi il link all'amministrazione
+    const adminLink = document.querySelector('a[href="admin.html"]');
+    if (adminLink) {
+      adminLink.style.display = "none";
+    }
+
+    // Modifica il messaggio di scadenza
+    const expiredMessage = document.querySelector("#sessionExpired p");
+    if (expiredMessage) {
+      expiredMessage.textContent =
+        "Il link di accesso è scaduto. Per accedere di nuovo, richiedi un nuovo link.";
+    }
+
+    // Modifica il pulsante di assistenza
+    const assistanceBtn = document.querySelector(
+      "#sessionExpired .btn-whatsapp"
+    );
+    if (assistanceBtn) {
+      assistanceBtn.href =
+        "https://api.whatsapp.com/send?phone=+393898883634&text=Hi, I need a new access link";
+      assistanceBtn.innerHTML =
+        '<i class="fab fa-whatsapp"></i> Richiedi nuovo link';
+    }
+  }
 
   // Configura l'ascolto per i cambiamenti del codice
   setupCodeChangeListener();
@@ -821,7 +1127,7 @@ async function init() {
   document.addEventListener("contextmenu", (e) => e.preventDefault());
 
   updateCheckinTimeDisplay();
-    setupCodeChangeListener();
+  setupCodeChangeListener();
 }
 
 // =============================================
