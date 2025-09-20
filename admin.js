@@ -81,21 +81,76 @@ adminPasswordInput.addEventListener("keypress", function (e) {
   }
 });
 
+// Funzione per salvare le impostazioni su Firebase
+async function saveSettingToFirebase(key, value) {
+  try {
+    await database.ref("settings/" + key).set(value);
+    console.log(`Impostazione ${key} salvata su Firebase:`, value);
+    return true;
+  } catch (error) {
+    console.error(`Errore nel salvataggio di ${key} su Firebase:`, error);
+    return false;
+  }
+}
+
+// Funzione per caricare le impostazioni da Firebase
+async function loadSettingsFromFirebase() {
+  try {
+    const snapshot = await database.ref("settings").once("value");
+    if (snapshot.exists()) {
+      return snapshot.val();
+    }
+    return null;
+  } catch (error) {
+    console.error(
+      "Errore nel caricamento delle impostazioni da Firebase:",
+      error
+    );
+    return null;
+  }
+}
+
 // Funzione per caricare le impostazioni
-function loadSettings() {
-  // Carica il codice segreto
-  const secretCode = localStorage.getItem("secret_code") || "2245";
-  currentCodeEl.value = secretCode;
+async function loadSettings() {
+  // Prova a caricare da Firebase
+  const firebaseSettings = await loadSettingsFromFirebase();
 
-  // Carica i click massimi
-  const maxClicks = localStorage.getItem("max_clicks") || "3";
-  currentMaxClicksEl.value = maxClicks;
-  document.getElementById("newMaxClicks").value = maxClicks;
+  if (firebaseSettings) {
+    // Usa le impostazioni da Firebase
+    currentCodeEl.value = firebaseSettings.secret_code || "2245";
+    currentMaxClicksEl.value = firebaseSettings.max_clicks || "3";
+    currentTimeLimitEl.value = firebaseSettings.time_limit_minutes || "50000";
 
-  // Carica il tempo limite
-  const timeLimit = localStorage.getItem("time_limit_minutes") || "50000";
-  currentTimeLimitEl.value = timeLimit;
-  document.getElementById("newTimeLimit").value = timeLimit;
+    document.getElementById("newMaxClicks").value =
+      firebaseSettings.max_clicks || "3";
+    document.getElementById("newTimeLimit").value =
+      firebaseSettings.time_limit_minutes || "50000";
+
+    // Aggiorna anche il localStorage
+    localStorage.setItem("secret_code", firebaseSettings.secret_code || "2245");
+    localStorage.setItem("max_clicks", firebaseSettings.max_clicks || "3");
+    localStorage.setItem(
+      "time_limit_minutes",
+      firebaseSettings.time_limit_minutes || "50000"
+    );
+  } else {
+    // Fallback al localStorage
+    const secretCode = localStorage.getItem("secret_code") || "2245";
+    const maxClicks = localStorage.getItem("max_clicks") || "3";
+    const timeLimit = localStorage.getItem("time_limit_minutes") || "50000";
+
+    currentCodeEl.value = secretCode;
+    currentMaxClicksEl.value = maxClicks;
+    currentTimeLimitEl.value = timeLimit;
+
+    document.getElementById("newMaxClicks").value = maxClicks;
+    document.getElementById("newTimeLimit").value = timeLimit;
+
+    // Salva le impostazioni su Firebase per futuri utilizzi
+    saveSettingToFirebase("secret_code", secretCode);
+    saveSettingToFirebase("max_clicks", maxClicks);
+    saveSettingToFirebase("time_limit_minutes", timeLimit);
+  }
 
   // Carica le impostazioni orario check-in
   const checkinStartTime =
@@ -143,35 +198,49 @@ function loadSettings() {
 }
 
 // Aggiorna il codice segreto
-document.getElementById("btnCodeUpdate").addEventListener("click", function () {
-  const newCode = document.getElementById("newCode").value.trim();
-  if (!newCode) {
-    alert("Inserisci un codice valido");
-    return;
-  }
+document
+  .getElementById("btnCodeUpdate")
+  .addEventListener("click", async function () {
+    const newCode = document.getElementById("newCode").value.trim();
+    if (!newCode) {
+      alert("Inserisci un codice valido");
+      return;
+    }
 
-  localStorage.setItem("secret_code", newCode);
+    // Salva su Firebase
+    const success = await saveSettingToFirebase("secret_code", newCode);
 
-  // Aggiorna la versione del codice per forzare il reset
-  const currentVersion = parseInt(localStorage.getItem("code_version")) || 1;
-  const newVersion = currentVersion + 1;
-  localStorage.setItem("code_version", newVersion.toString());
+    if (success) {
+      // Aggiorna localStorage
+      localStorage.setItem("secret_code", newCode);
 
-  // Aggiungi un timestamp per forzare l'aggiornamento
-  localStorage.setItem("last_code_update", Date.now().toString());
+      // Aggiorna la versione del codice
+      const currentVersion =
+        parseInt(localStorage.getItem("code_version")) || 1;
+      const newVersion = currentVersion + 1;
+      localStorage.setItem("code_version", newVersion.toString());
+      await saveSettingToFirebase("code_version", newVersion);
 
-  currentCodeEl.value = newCode;
-  document.getElementById("newCode").value = "";
+      // Aggiorna timestamp
+      const timestamp = Date.now().toString();
+      localStorage.setItem("last_code_update", timestamp);
+      await saveSettingToFirebase("last_code_update", timestamp);
 
-  alert(
-    "Codice aggiornato con successo! Tutti gli utenti dovranno inserire il nuovo codice."
-  );
-});
+      currentCodeEl.value = newCode;
+      document.getElementById("newCode").value = "";
+
+      alert(
+        "Codice aggiornato con successo! Tutti gli utenti dovranno inserire il nuovo codice."
+      );
+    } else {
+      alert("Errore nel salvataggio del nuovo codice. Riprovare.");
+    }
+  });
 
 // Aggiorna le impostazioni di sistema
 document
   .getElementById("btnSettingsUpdate")
-  .addEventListener("click", function () {
+  .addEventListener("click", async function () {
     const newMaxClicks = document.getElementById("newMaxClicks").value.trim();
     const newTimeLimit = document.getElementById("newTimeLimit").value.trim();
 
@@ -181,23 +250,38 @@ document
     }
 
     if (!newTimeLimit || isNaN(newTimeLimit) || parseInt(newTimeLimit) <= 0) {
-      alert("Inserisci un numero valido per il tempo limite");
+      alert("Inserisci a number valid for the time limit");
       return;
     }
 
-    localStorage.setItem("max_clicks", newMaxClicks);
-    localStorage.setItem("time_limit_minutes", newTimeLimit);
+    // Salva su Firebase
+    const maxClicksSuccess = await saveSettingToFirebase(
+      "max_clicks",
+      newMaxClicks
+    );
+    const timeLimitSuccess = await saveSettingToFirebase(
+      "time_limit_minutes",
+      newTimeLimit
+    );
 
-    currentMaxClicksEl.value = newMaxClicks;
-    currentTimeLimitEl.value = newTimeLimit;
+    if (maxClicksSuccess && timeLimitSuccess) {
+      // Aggiorna localStorage
+      localStorage.setItem("max_clicks", newMaxClicks);
+      localStorage.setItem("time_limit_minutes", newTimeLimit);
 
-    alert("Impostazioni aggiornate con successo!");
+      currentMaxClicksEl.value = newMaxClicks;
+      currentTimeLimitEl.value = newTimeLimit;
+
+      alert("Impostazioni aggiornate con successo!");
+    } else {
+      alert("Errore nel salvataggio delle impostazioni. Riprovare.");
+    }
   });
 
 // Aggiorna l'orario de check-in
 document
   .getElementById("btnUpdateCheckinTime")
-  .addEventListener("click", function () {
+  .addEventListener("click", async function () {
     const newCheckinStartTime =
       document.getElementById("checkinStartTime").value;
     const newCheckinEndTime = document.getElementById("checkinEndTime").value;
@@ -216,7 +300,7 @@ document
     const startTimeInMinutes = startHours * 60 + startMinutes;
     const endTimeInMinutes = endHours * 60 + endMinutes;
 
-    // Verifica che l'orario de fine sia dopo l'orario di inizio
+    // Verifica che l'orario di fine sia dopo l'orario di inizio
     if (endTimeInMinutes <= startTimeInMinutes) {
       document.getElementById("timeRangeError").style.display = "block";
       return;
@@ -224,17 +308,32 @@ document
 
     document.getElementById("timeRangeError").style.display = "none";
 
-    localStorage.setItem("checkin_start_time", newCheckinStartTime);
-    localStorage.setItem("checkin_end_time", newCheckinEndTime);
+    // Salva su Firebase
+    const startTimeSuccess = await saveSettingToFirebase(
+      "checkin_start_time",
+      newCheckinStartTime
+    );
+    const endTimeSuccess = await saveSettingToFirebase(
+      "checkin_end_time",
+      newCheckinEndTime
+    );
 
-    currentCheckinTimeRangeEl.value = `${newCheckinStartTime} - ${newCheckinEndTime}`;
-    alert("Orario di check-in aggiornato con successo!");
+    if (startTimeSuccess && endTimeSuccess) {
+      // Aggiorna localStorage
+      localStorage.setItem("checkin_start_time", newCheckinStartTime);
+      localStorage.setItem("checkin_end_time", newCheckinEndTime);
+
+      currentCheckinTimeRangeEl.value = `${newCheckinStartTime} - ${newCheckinEndTime}`;
+      alert("Orario di check-in aggiornato con successo!");
+    } else {
+      alert("Errore nel salvataggio dell'orario di check-in. Riprovare.");
+    }
   });
 
 // Attiva/disattiva il controllo orario
 document
   .getElementById("btnToggleCheckinTime")
-  .addEventListener("click", function () {
+  .addEventListener("click", async function () {
     const currentStatus = localStorage.getItem("checkin_time_enabled");
     let newStatus;
 
@@ -244,27 +343,40 @@ document
       newStatus = currentStatus !== "true";
     }
 
-    localStorage.setItem("checkin_time_enabled", newStatus.toString());
-
-    if (newStatus) {
-      checkinTimeStatusEl.innerHTML =
-        '<span class="status-indicator status-on"></span> Attivo';
-      this.classList.remove("btn-error");
-      this.classList.add("btn-success");
-      this.innerHTML =
-        '<i class="fas fa-toggle-on"></i> Disattiva Controllo Orario';
-    } else {
-      checkinTimeStatusEl.innerHTML =
-        '<span class="status-indicator status-off"></span> Disattivato';
-      this.classList.remove("btn-success");
-      this.classList.add("btn-error");
-      this.innerHTML =
-        '<i class="fas fa-toggle-off"></i> Attiva Controllo Orario';
-    }
-
-    alert(
-      `Controllo orario ${newStatus ? "attivato" : "disattivato"} con successo!`
+    // Salva su Firebase
+    const success = await saveSettingToFirebase(
+      "checkin_time_enabled",
+      newStatus.toString()
     );
+
+    if (success) {
+      // Aggiorna localStorage
+      localStorage.setItem("checkin_time_enabled", newStatus.toString());
+
+      if (newStatus) {
+        checkinTimeStatusEl.innerHTML =
+          '<span class="status-indicator status-on"></span> Attivo';
+        this.classList.remove("btn-error");
+        this.classList.add("btn-success");
+        this.innerHTML =
+          '<i class="fas fa-toggle-on"></i> Disattiva Controllo Orario';
+      } else {
+        checkinTimeStatusEl.innerHTML =
+          '<span class="status-indicator status-off"></span> Disattivato';
+        this.classList.remove("btn-success");
+        this.classList.add("btn-error");
+        this.innerHTML =
+          '<i class="fas fa-toggle-off"></i> Attiva Controllo Orario';
+      }
+
+      alert(
+        `Controllo orario ${
+          newStatus ? "attivato" : "disattivato"
+        } con successo!`
+      );
+    } else {
+      alert("Errore nel salvataggio delle impostazioni. Riprovare.");
+    }
   });
 
 // Gestione visibilità porte extra
@@ -399,8 +511,10 @@ function saveSecureLink(linkId, expirationTime, maxUsage, expirationHours) {
 // Aggiorna la lista dei link attivi
 function updateActiveLinksList() {
   const container = document.getElementById("activeLinksList");
+  container.innerHTML =
+    '<p style="color: #666; text-align: center;">Caricamento...</p>';
 
-  // Prima prova a recuperare da Firebase
+  // Recupera i link da Firebase
   database
     .ref("secure_links")
     .orderByChild("created")
@@ -485,7 +599,7 @@ function updateActiveLinksList() {
         });
     })
     .catch((error) => {
-      console.error("Errore nel recupero dei link da Firebase:", error);
+      console.error("Errore nel recupero dei link:", error);
       // Fallback al localStorage
       const secureLinks = JSON.parse(
         localStorage.getItem("secure_links") || "{}"
@@ -583,32 +697,36 @@ function copySecureLink(linkId) {
 }
 
 // Revoca link
-// Revoca link
 function revokeSecureLink(linkId) {
   // Prima prova a revocare su Firebase
-  database.ref('secure_links/' + linkId).update({
-    status: 'revoked',
-    expiration: Date.now()
-  })
-  .then(() => {
-    updateActiveLinksList();
-    updateLinkStatistics();
-    alert("Link revocato con successo!");
-  })
-  .catch((error) => {
-    console.error('Errore nella revoca del link su Firebase:', error);
-    // Fallback al localStorage
-    const secureLinks = JSON.parse(localStorage.getItem("secure_links") || "{}");
-    if (secureLinks[linkId]) {
-      secureLinks[linkId].status = "revoked";
-      secureLinks[linkId].expiration = Date.now();
-      localStorage.setItem("secure_links", JSON.stringify(secureLinks));
+  database
+    .ref("secure_links/" + linkId)
+    .update({
+      status: "revoked",
+      expiration: Date.now(),
+    })
+    .then(() => {
       updateActiveLinksList();
       updateLinkStatistics();
       alert("Link revocato con successo!");
-    }
-  });
+    })
+    .catch((error) => {
+      console.error("Errore nella revoca del link su Firebase:", error);
+      // Fallback al localStorage
+      const secureLinks = JSON.parse(
+        localStorage.getItem("secure_links") || "{}"
+      );
+      if (secureLinks[linkId]) {
+        secureLinks[linkId].status = "revoked";
+        secureLinks[linkId].expiration = Date.now();
+        localStorage.setItem("secure_links", JSON.stringify(secureLinks));
+        updateActiveLinksList();
+        updateLinkStatistics();
+        alert("Link revocato con successo!");
+      }
+    });
 }
+
 // Aggiorna le statistiche
 function updateLinkStatistics() {
   // Prima prova a recuperare da Firebase
@@ -633,10 +751,7 @@ function updateLinkStatistics() {
       ).length;
     })
     .catch((error) => {
-      console.error(
-        "Errore nel recupero delle statistiche da Firebase:",
-        error
-      );
+      console.error("Errore nel recupero delle statistiche:", error);
       // Fallback al localStorage
       const secureLinks = JSON.parse(
         localStorage.getItem("secure_links") || "{}"
@@ -660,6 +775,6 @@ function updateLinkStatistics() {
 document.addEventListener("DOMContentLoaded", function () {
   updateActiveLinksList();
   updateLinkStatistics();
-  setInterval(updateActiveLinksList, 60000); // Aggiorna ogni minuto
+  setInterval(updateActiveLinksList, 60000); // Controlla ogni minuto
   setInterval(updateLinkStatistics, 5000); // Aggiorna stats ogni 5 secondi
 });
