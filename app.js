@@ -63,8 +63,8 @@ let CORRECT_CODE = localStorage.getItem("secret_code") || "";
 const SECRET_KEY = "musart_secret_123_fixed_key";
 
 // Variabili per l'orario di check-in (range)
-let CHECKIN_START_TIME = localStorage.getItem("checkin_start_time") || "14:00";
-let CHECKIN_END_TIME = localStorage.getItem("checkin_end_time") || "22:00";
+let CHECKIN_START_TIME = localStorage.getItem("checkin_start_time") || "";
+let CHECKIN_END_TIME = localStorage.getItem("checkin_end_time") || "";
 let CHECKIN_TIME_ENABLED = localStorage.getItem("checkin_time_enabled");
 if (CHECKIN_TIME_ENABLED === null) {
   CHECKIN_TIME_ENABLED = true;
