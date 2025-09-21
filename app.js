@@ -14,7 +14,6 @@ const firebaseConfig = {
 // Inizializza Firebase
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
-const auth = firebase.auth();
 
 // Variabili globali
 let isTokenSession = false;
@@ -71,9 +70,14 @@ const SECRET_KEY = "musart_secret_123_fixed_key";
 // Salva dati su Firebase
 async function setFirebaseStorage(key, value, sessionId = null) {
   try {
-    const path = sessionId
-      ? `sessions/${sessionId}/${key}`
-      : `sessions/${currentUserSession.id}/${key}`;
+    if (!sessionId && !currentUserSession) {
+      console.error("Nessuna sessione utente attiva per il salvataggio");
+      return false;
+    }
+
+    const targetSessionId = sessionId || currentUserSession.id;
+    const path = `sessions/${targetSessionId}/${key}`;
+
     await database.ref(path).set({
       value: value,
       timestamp: Date.now(),
@@ -88,9 +92,14 @@ async function setFirebaseStorage(key, value, sessionId = null) {
 // Recupera dati da Firebase
 async function getFirebaseStorage(key, sessionId = null) {
   try {
-    const path = sessionId
-      ? `sessions/${sessionId}/${key}`
-      : `sessions/${currentUserSession.id}/${key}`;
+    if (!sessionId && !currentUserSession) {
+      console.error("Nessuna sessione utente attiva per il recupero");
+      return null;
+    }
+
+    const targetSessionId = sessionId || currentUserSession.id;
+    const path = `sessions/${targetSessionId}/${key}`;
+
     const snapshot = await database.ref(path).once("value");
     return snapshot.exists() ? snapshot.val().value : null;
   } catch (error) {
@@ -102,9 +111,14 @@ async function getFirebaseStorage(key, sessionId = null) {
 // Rimuovi dati da Firebase
 async function clearFirebaseStorage(key, sessionId = null) {
   try {
-    const path = sessionId
-      ? `sessions/${sessionId}/${key}`
-      : `sessions/${currentUserSession.id}/${key}`;
+    if (!sessionId && !currentUserSession) {
+      console.error("Nessuna sessione utente attiva per la rimozione");
+      return false;
+    }
+
+    const targetSessionId = sessionId || currentUserSession.id;
+    const path = `sessions/${targetSessionId}/${key}`;
+
     await database.ref(path).remove();
     return true;
   } catch (error) {
@@ -118,18 +132,19 @@ async function clearFirebaseStorage(key, sessionId = null) {
 // =============================================
 
 // Crea una nuova sessione utente
-async function createUserSession() {
+async function createUserSession(sessionData = {}) {
   const sessionId = generateSessionId();
-  const sessionData = {
+  const sessionObject = {
     id: sessionId,
     createdAt: Date.now(),
     isTokenSession: isTokenSession,
     tokenId: currentTokenId,
+    ...sessionData,
   };
 
   try {
-    await database.ref(`sessions/${sessionId}`).set(sessionData);
-    currentUserSession = sessionData;
+    await database.ref(`sessions/${sessionId}`).set(sessionObject);
+    currentUserSession = sessionObject;
     return sessionId;
   } catch (error) {
     console.error("Errore nella creazione della sessione:", error);
@@ -189,6 +204,7 @@ async function setUsageStartTime() {
 // Controlla il limite di tempo
 async function checkTimeLimit() {
   if (isTokenSession) return false;
+  if (!currentUserSession) return false;
 
   const startTime = await getFirebaseStorage("usage_start_time");
   const storedHash = await getFirebaseStorage("usage_hash");
@@ -220,8 +236,9 @@ async function checkTimeLimit() {
 
 // Mostra errore fatale
 function showFatalError(message) {
-  clearInterval(timeCheckInterval);
-  clearInterval(codeCheckInterval);
+  if (timeCheckInterval) clearInterval(timeCheckInterval);
+  if (codeCheckInterval) clearInterval(codeCheckInterval);
+
   document.body.innerHTML = `
     <div style="
       position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
@@ -236,13 +253,15 @@ function showFatalError(message) {
 function showSessionExpired() {
   if (isTokenSession) return;
 
-  clearInterval(timeCheckInterval);
-  clearInterval(codeCheckInterval);
+  if (timeCheckInterval) clearInterval(timeCheckInterval);
+  if (codeCheckInterval) clearInterval(codeCheckInterval);
 
   document.getElementById("expiredOverlay").classList.remove("hidden");
   document.getElementById("controlPanel").classList.add("hidden");
   document.getElementById("sessionExpired").classList.remove("hidden");
-  document.getElementById("test2").style.display = "none";
+
+  const test2Element = document.getElementById("test2");
+  if (test2Element) test2Element.style.display = "none";
 
   DEVICES.forEach((device) => {
     const btn = document.getElementById(device.button_id);
@@ -389,12 +408,14 @@ async function updateCheckinTimeDisplay() {
 
 // Mostra popup check-in anticipato
 function showEarlyCheckinPopup() {
-  document.getElementById("earlyCheckinPopup").style.display = "flex";
+  const popup = document.getElementById("earlyCheckinPopup");
+  if (popup) popup.style.display = "flex";
 }
 
 // Chiudi popup check-in anticipato
 function closeEarlyCheckinPopup() {
-  document.getElementById("earlyCheckinPopup").style.display = "none";
+  const popup = document.getElementById("earlyCheckinPopup");
+  if (popup) popup.style.display = "none";
 }
 
 // =============================================
@@ -403,6 +424,8 @@ function closeEarlyCheckinPopup() {
 
 // Aggiorna la barra di stato
 async function updateStatusBar() {
+  if (!currentUserSession) return;
+
   const mainDoorCounter = document.getElementById("mainDoorCounter");
   const aptDoorCounter = document.getElementById("aptDoorCounter");
   const timeRemaining = document.getElementById("timeRemaining");
@@ -445,6 +468,12 @@ async function updateStatusBar() {
 
 // Ottieni i click rimanenti
 async function getClicksLeft(key) {
+  if (!currentUserSession) {
+    const settingsSnapshot = await database.ref("settings").once("value");
+    const settings = settingsSnapshot.exists() ? settingsSnapshot.val() : {};
+    return settings.max_clicks || 3;
+  }
+
   const stored = await getFirebaseStorage(key);
 
   // Recupera il max_clicks dalle impostazioni
@@ -457,6 +486,8 @@ async function getClicksLeft(key) {
 
 // Imposta i click rimanenti
 async function setClicksLeft(key, count) {
+  if (!currentUserSession) return;
+
   await setFirebaseStorage(key, count.toString());
   updateStatusBar();
 }
@@ -510,11 +541,13 @@ function setupCodeChangeListener() {
 // Gestisci il cambio del codice
 async function handleCodeChange(newCode) {
   // Resetta tutto
-  await clearFirebaseStorage("usage_start_time");
-  await clearFirebaseStorage("usage_hash");
+  if (currentUserSession) {
+    await clearFirebaseStorage("usage_start_time");
+    await clearFirebaseStorage("usage_hash");
 
-  for (const device of DEVICES) {
-    await clearFirebaseStorage(device.storage_key);
+    for (const device of DEVICES) {
+      await clearFirebaseStorage(device.storage_key);
+    }
   }
 
   document.getElementById("controlPanel").style.display = "none";
@@ -600,15 +633,19 @@ async function showConfirmationPopup(device) {
     .replace(/([A-Z])/g, " $1")
     .replace(/^./, (str) => str.toUpperCase());
 
-  document.getElementById(
-    "confirmationMessage"
-  ).textContent = `Are you sure you want to unlock the ${doorName}?`;
-  document.getElementById("confirmationPopup").style.display = "flex";
+  const confirmationMessage = document.getElementById("confirmationMessage");
+  if (confirmationMessage) {
+    confirmationMessage.textContent = `Are you sure you want to unlock the ${doorName}?`;
+  }
+
+  const confirmationPopup = document.getElementById("confirmationPopup");
+  if (confirmationPopup) confirmationPopup.style.display = "flex";
 }
 
 // Chiudi popup di conferma
 function closeConfirmationPopup() {
-  document.getElementById("confirmationPopup").style.display = "none";
+  const confirmationPopup = document.getElementById("confirmationPopup");
+  if (confirmationPopup) confirmationPopup.style.display = "none";
   currentDevice = null;
 }
 
@@ -735,6 +772,13 @@ async function handleSecureToken() {
     isTokenSession = true;
     currentTokenId = token;
 
+    // Crea una nuova sessione per questo token
+    await createUserSession({
+      isTokenSession: true,
+      tokenId: token,
+      expiration: linkData.expiration,
+    });
+
     const authCodeInput = document.getElementById("authCode");
     if (authCodeInput) {
       const codeSnapshot = await database
@@ -747,6 +791,21 @@ async function handleSecureToken() {
       await incrementTokenUsage(token, linkData);
       cleanUrl();
       startTokenExpirationCheck(linkData.expiration);
+
+      // Nascondi il form e mostra il pannello di controllo
+      document.getElementById("controlPanel").style.display = "block";
+      document.getElementById("authCode").style.display = "none";
+      document.getElementById("auth-form").style.display = "none";
+      document.getElementById("btnCheckCode").style.display = "none";
+      document.getElementById("important").style.display = "none";
+
+      document.getElementById("checkinTimeInfo").style.display = "block";
+      updateCheckinTimeDisplay();
+
+      for (const device of DEVICES) {
+        await updateButtonState(device);
+      }
+      updateStatusBar();
 
       return true;
     }
@@ -932,7 +991,7 @@ async function handleCodeSubmit() {
   }
 
   // Crea una nuova sessione
-  await createUserSession();
+  await createUserSession({ isTokenSession: false });
   await setUsageStartTime();
 
   if (await checkTimeLimit()) return;
@@ -1006,16 +1065,18 @@ async function init() {
     }
   });
 
-  document.getElementById("confirmYes").addEventListener("click", () => {
-    if (currentDevice) {
-      activateDevice(currentDevice);
-      closeConfirmationPopup();
-    }
-  });
+  const confirmYes = document.getElementById("confirmYes");
+  if (confirmYes) {
+    confirmYes.addEventListener("click", () => {
+      if (currentDevice) {
+        activateDevice(currentDevice);
+        closeConfirmationPopup();
+      }
+    });
+  }
 
-  document
-    .getElementById("confirmNo")
-    .addEventListener("click", closeConfirmationPopup);
+  const confirmNo = document.getElementById("confirmNo");
+  if (confirmNo) confirmNo.addEventListener("click", closeConfirmationPopup);
 
   document.querySelectorAll(".popup .btn").forEach((button) => {
     button.addEventListener("click", function () {
