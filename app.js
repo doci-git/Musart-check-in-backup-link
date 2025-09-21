@@ -53,127 +53,6 @@ const DEVICES = [
   },
 ];
 
-// Variabile globale per il controllo dei link
-let CODE_CHECK_INTERVAL;
-let LINK_CHECK_INTERVAL;
-
-function setupCodeChangeListener() {
-  // Controlla periodicamente se il codice è cambiato
-  CODE_CHECK_INTERVAL = setInterval(() => {
-    checkCodeVersion();
-  }, 2000);
-
-  // Controlla periodicamente i link scaduti
-  LINK_CHECK_INTERVAL = setInterval(() => {
-    checkExpiredLinks();
-  }, 60000);
-
-  // Ascolta anche gli eventi di storage (per cambiamenti tra tab)
-  window.addEventListener("storage", function (e) {
-    if (e.key === "code_version" || e.key === "last_code_update") {
-      checkCodeVersion();
-    }
-  });
-}
-
-function checkCodeVersion() {
-  const savedVersion = parseInt(localStorage.getItem("code_version")) || 1;
-  if (savedVersion > currentCodeVersion) {
-    // Il codice è cambiato, resetta tutto
-    currentCodeVersion = savedVersion;
-    CORRECT_CODE = localStorage.getItem("secret_code") || "2245";
-
-    clearStorage("usage_start_time");
-    clearStorage("usage_hash");
-    DEVICES.forEach((device) => {
-      clearStorage(device.storage_key);
-    });
-
-    document.getElementById("controlPanel").style.display = "none";
-    document.getElementById("authCode").style.display = "block";
-    document.getElementById("auth-form").style.display = "block";
-    document.getElementById("btnCheckCode").style.display = "block";
-    document.getElementById("important").style.display = "block";
-
-    // Mostra una notifica
-    showNotification(
-      "Il codice di accesso è stato aggiornato. Inserisci il nuovo codice."
-    );
-  }
-}
-
-function checkExpiredLinks() {
-  const secureLinks = JSON.parse(localStorage.getItem("secure_links") || "{}");
-  let updated = false;
-
-  Object.keys(secureLinks).forEach((linkId) => {
-    const link = secureLinks[linkId];
-    if (link.expiration < Date.now() && link.status === "active") {
-      secureLinks[linkId].status = "expired";
-      updated = true;
-    }
-  });
-
-  if (updated) {
-    localStorage.setItem("secure_links", JSON.stringify(secureLinks));
-  }
-}
-
-function showNotification(message) {
-  // Rimuovi notifiche precedenti
-  const existingNotification = document.getElementById(
-    "codeChangeNotification"
-  );
-  if (existingNotification) {
-    existingNotification.remove();
-  }
-
-  // Crea una nuova notifica
-  const notification = document.createElement("div");
-  notification.id = "codeChangeNotification";
-  notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #FF5A5F;
-        color: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    `;
-
-  notification.innerHTML = `
-        <i class="fas fa-info-circle"></i>
-        <span>${message}</span>
-        <button onclick="this.parentElement.remove()" style="background:none; border:none; color:white; margin-left:10px; cursor:pointer;">
-            <i class="fas fa-times"></i>
-        </button>
-    `;
-
-  document.body.appendChild(notification);
-
-  // Rimuovi automaticamente dopo 5 secondi
-  setTimeout(() => {
-    if (notification.parentElement) {
-      notification.remove();
-    }
-  }, 5000);
-}
-
-// Pulisci gli intervalli quando la pagina viene chiusa
-window.addEventListener("beforeunload", function () {
-  if (CODE_CHECK_INTERVAL) {
-    clearInterval(CODE_CHECK_INTERVAL);
-  }
-  if (LINK_CHECK_INTERVAL) {
-    clearInterval(LINK_CHECK_INTERVAL);
-  }
-});
-
 // Configurazioni con valori di default
 let MAX_CLICKS = parseInt(localStorage.getItem("max_clicks")) || 3;
 let TIME_LIMIT_MINUTES =
@@ -269,7 +148,7 @@ async function setUsageStartTime() {
 
 async function checkTimeLimit() {
   // Se è una sessione token, non controllare il limite di tempo globale
-  if (window.isTokenSession) {
+  if (isTokenSession) {
     return false;
   }
 
@@ -309,10 +188,9 @@ function showFatalError(message) {
         </div>`;
 }
 
-// Modifica la funzione showSessionExpired per distinguere tra sessioni normali e token
 function showSessionExpired() {
   // Se è una sessione token, usa la gestione specifica già implementata
-  if (window.isTokenSession) {
+  if (isTokenSession) {
     return;
   }
 
@@ -988,6 +866,76 @@ function startTokenExpirationCheck(expirationTime) {
   }, 1000); // Controlla ogni secondo
 }
 
+// Funzione per caricare le impostazioni da Firebase
+async function loadSettingsFromFirebase() {
+  try {
+    const snapshot = await database.ref("settings").once("value");
+    if (snapshot.exists()) {
+      return snapshot.val();
+    }
+    return null;
+  } catch (error) {
+    console.error(
+      "Errore nel caricamento delle impostazioni da Firebase:",
+      error
+    );
+    return null;
+  }
+}
+
+// Funzione per verificare aggiornamenti delle impostazioni
+function setupSettingsListener() {
+  database.ref("settings").on("value", (snapshot) => {
+    if (snapshot.exists()) {
+      const settings = snapshot.val();
+
+      // Aggiorna le variabili globali
+      if (settings.secret_code) {
+        CORRECT_CODE = settings.secret_code;
+        localStorage.setItem("secret_code", settings.secret_code);
+      }
+
+      if (settings.max_clicks) {
+        MAX_CLICKS = parseInt(settings.max_clicks);
+        localStorage.setItem("max_clicks", settings.max_clicks);
+      }
+
+      if (settings.time_limit_minutes) {
+        TIME_LIMIT_MINUTES = parseInt(settings.time_limit_minutes);
+        localStorage.setItem("time_limit_minutes", settings.time_limit_minutes);
+      }
+
+      if (settings.code_version) {
+        const savedVersion = parseInt(settings.code_version);
+        if (savedVersion > currentCodeVersion) {
+          checkCodeVersion();
+        }
+      }
+
+      updateStatusBar();
+      DEVICES.forEach(updateButtonState);
+    }
+  });
+}
+
+// Verifica lo stato della connessione Firebase
+function monitorFirebaseConnection() {
+  const connectedRef = database.ref(".info/connected");
+  connectedRef.on("value", (snap) => {
+    if (snap.val() === true) {
+      console.log("Connesso a Firebase");
+      document.body.classList.remove("firebase-offline");
+    } else {
+      console.log("Non connesso a Firebase");
+      document.body.classList.add("firebase-offline");
+      showNotification(
+        "Connessione a Firebase persa. Le modifiche potrebbero non essere sincronizzate.",
+        "warning"
+      );
+    }
+  });
+}
+
 // =============================================
 // INIZIALIZZAZIONE DELL'APPLICAZIONE
 // =============================================
@@ -1062,27 +1010,30 @@ async function init() {
   }
 
   updateDoorVisibility();
- 
 
-  
-  // Controlla se è una sessione token
-  if (window.isTokenSession) {
-    // Per sessioni token, usa un controllo di scadenza diverso
-    console.log("Sessione token attiva - controllo scadenza disabilitato");
-  } else {
-    // Per sessioni normali, mantieni il controllo tradizionale
-    timeCheckInterval = setInterval(async () => {
-      const expired = await checkTimeLimit();
-      if (!expired) {
-        await updateGlobalCodeVersion();
-        updateCheckinTimeDisplay();
-      }
-    }, 1000);
+  // Carica le impostazioni da Firebase
+  const firebaseSettings = await loadSettingsFromFirebase();
+
+  if (firebaseSettings) {
+    // Usa le impostazioni da Firebase
+    CORRECT_CODE = firebaseSettings.secret_code || "2245";
+    MAX_CLICKS = parseInt(firebaseSettings.max_clicks) || 3;
+    TIME_LIMIT_MINUTES = parseInt(firebaseSettings.time_limit_minutes) || 50000;
+
+    // Aggiorna localStorage
+    localStorage.setItem("secret_code", CORRECT_CODE);
+    localStorage.setItem("max_clicks", MAX_CLICKS.toString());
+    localStorage.setItem("time_limit_minutes", TIME_LIMIT_MINUTES.toString());
+
+    // Aggiorna la versione del codice se presente
+    if (firebaseSettings.code_version) {
+      currentCodeVersion = parseInt(firebaseSettings.code_version);
+      localStorage.setItem("code_version", currentCodeVersion.toString());
+    }
   }
-  
-  const hasToken = await handleSecureToken();
 
-  // ... resto del codice init() esistente ...
+  // Controlla se è una sessione token
+  const hasToken = await handleSecureToken();
 
   // Se è una sessione token, modifica il comportamento
   if (isTokenSession) {
@@ -1114,20 +1065,25 @@ async function init() {
   // Configura l'ascolto per i cambiamenti del codice
   setupCodeChangeListener();
 
-  timeCheckInterval = setInterval(async () => {
-    const expired = await checkTimeLimit();
-    if (!expired) {
-      await updateGlobalCodeVersion();
-      updateCheckinTimeDisplay();
-    }
-  }, 1000);
+  // Configura l'ascolto per i cambiamenti delle impostazioni
+  setupSettingsListener();
+
+  // Per sessioni normali, mantieni il controllo tradizionale
+  if (!isTokenSession) {
+    timeCheckInterval = setInterval(async () => {
+      const expired = await checkTimeLimit();
+      if (!expired) {
+        await updateGlobalCodeVersion();
+        updateCheckinTimeDisplay();
+      }
+    }, 1000);
+  }
 
   setInterval(updateCheckinTimeDisplay, 60000);
+  monitorFirebaseConnection();
 
   document.addEventListener("contextmenu", (e) => e.preventDefault());
-
   updateCheckinTimeDisplay();
-  setupCodeChangeListener();
 }
 
 // =============================================
