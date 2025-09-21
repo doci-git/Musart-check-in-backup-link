@@ -153,8 +153,8 @@ async function loadSettings() {
   }
 
   // Carica le impostazioni orario check-in
-  const checkinStartTime = localStorage.getItem("checkin_start_time") || "";
-  const checkinEndTime = localStorage.getItem("checkin_end_time") || "";
+  const checkinStartTime = localStorage.getItem("checkin_start_time") || "12:00";
+  const checkinEndTime = localStorage.getItem("checkin_end_time") || "23:00";
   document.getElementById("checkinStartTime").value = checkinStartTime;
   document.getElementById("checkinEndTime").value = checkinEndTime;
   currentCheckinTimeRangeEl.value = `${checkinStartTime} - ${checkinEndTime}`;
