@@ -1034,13 +1034,13 @@ function monitorFirebaseConnection() {
   const connectedRef = database.ref(".info/connected");
   connectedRef.on("value", (snap) => {
     if (snap.val() === true) {
-      console.log("Connesso a Firebase");
+      console.log("Connesso ");
       document.body.classList.remove("firebase-offline");
     } else {
-      console.log("Non connesso a Firebase");
+      console.log("Non connesso ");
       document.body.classList.add("firebase-offline");
       showNotification(
-        "Connessione a Firebase persa. Le modifiche potrebbero non essere sincronizzate.",
+        "Connessione persa. Le modifiche potrebbero non essere sincronizzate.",
         "warning"
       );
     }
