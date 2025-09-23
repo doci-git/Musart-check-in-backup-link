@@ -812,6 +812,7 @@ async function updateGlobalCodeVersion() {
 // Funzione per verificare e gestire i token
 
 // Funzione per verificare e gestire i token
+// Funzione per verificare e gestire i token
 async function handleSecureToken() {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get("token");
@@ -857,28 +858,23 @@ async function handleSecureToken() {
       console.log("Nessun codice personalizzato, userò il codice principale");
     }
 
-    // Compila automaticamente il codice
-    const authCodeInput = document.getElementById("authCode");
-    if (authCodeInput) {
-      // Usa il codice personalizzato se disponibile, altrimenti il codice principale
-      const codeToUse = currentTokenCustomCode || CORRECT_CODE;
-      authCodeInput.value = codeToUse;
-      console.log("Codice inserito automaticamente:", codeToUse);
+    // Mostra notifica
+    showTokenNotification(isValid.remainingUses, !!currentTokenCustomCode);
 
-      // Mostra notifica
-      showTokenNotification(isValid.remainingUses, !!currentTokenCustomCode);
+    // Incrementa il contatore di utilizzi
+    await incrementTokenUsage(token, linkData);
 
-      // Incrementa il contatore di utilizzi
-      await incrementTokenUsage(token, linkData);
+    // Pulisci l'URL
+    cleanUrl();
 
-      // Pulisci l'URL
-      cleanUrl();
+    // Avvia il controllo di scadenza per il token
+    startTokenExpirationCheck(linkData.expiration);
 
-      // Avvia il controllo di scadenza per il token
-      startTokenExpirationCheck(linkData.expiration);
+    // NON fare accesso automatico - mostra solo il form normale
+    console.log("Token valido riconosciuto, ma accesso manuale richiesto");
 
-      return true;
-    }
+    return true;
+
   } catch (error) {
     console.error("Errore nella verifica del token:", error);
     showTokenError("Errore di verifica");
@@ -887,7 +883,6 @@ async function handleSecureToken() {
 
   return false;
 }
-
 // Verifica la validità del token
 function validateSecureToken(linkData) {
   try {
@@ -937,6 +932,7 @@ async function incrementTokenUsage(token, linkData) {
 
 // Mostra notifica di token valido
 // Mostra notifica di token valido
+// Mostra notifica di token valido
 function showTokenNotification(remainingUses, hasCustomCode) {
   const notification = document.createElement("div");
   notification.style.cssText = `
@@ -956,15 +952,18 @@ function showTokenNotification(remainingUses, hasCustomCode) {
   `;
 
   const customCodeInfo = hasCustomCode ? 
-    '<div style="font-size: 12px; opacity: 0.9;">Codice dedicato attivo</div>' : 
-    '<div style="font-size: 12px; opacity: 0.9;">Utilizza il codice principale</div>';
+    '<div style="font-size: 12px; opacity: 0.9;">Questo link usa un codice dedicato</div>' : 
+    '<div style="font-size: 12px; opacity: 0.9;">Questo link usa il codice principale</div>';
 
   notification.innerHTML = `
     <i class="fas fa-check-circle"></i>
     <div>
-      <div>Accesso autorizzato tramite link sicuro</div>
+      <div>Link sicuro riconosciuto</div>
       <div style="font-size: 12px; opacity: 0.9;">Utilizzi rimanenti: ${remainingUses}</div>
       ${customCodeInfo}
+      <div style="font-size: 12px; opacity: 0.9; margin-top: 5px;">
+        <i class="fas fa-info-circle"></i> Inserisci il codice qui sotto
+      </div>
     </div>
     <button onclick="this.parentElement.remove()" style="
       background: none;
@@ -1038,6 +1037,27 @@ function cleanUrl() {
   }
 }
 
+// Funzione per login manuale (inserimento codice)
+async function performManualLogin() {
+  // NON impostare subito il tempo di sessione qui
+  // Aspetta il primo click su una porta
+  sessionStartTime = null;
+
+  if (await checkTimeLimit()) return;
+
+  document.getElementById("controlPanel").style.display = "block";
+  document.getElementById("authCode").style.display = "none";
+  document.getElementById("auth-form").style.display = "none";
+  document.getElementById("btnCheckCode").style.display = "none";
+  document.getElementById("important").style.display = "none";
+
+  document.getElementById("checkinTimeInfo").style.display = "block";
+  updateCheckinTimeDisplay();
+
+  DEVICES.forEach(updateButtonState);
+  updateStatusBar();
+}
+
 // Avvia il controllo di scadenza per il token
 function startTokenExpirationCheck(expirationTime) {
   const checkTokenExpiration = setInterval(() => {
@@ -1063,11 +1083,11 @@ async function handleCodeSubmit() {
   if (isTokenSession && currentTokenCustomCode) {
     // Se è una sessione token con codice personalizzato, usa quello
     expectedCode = currentTokenCustomCode;
-    console.log("Usando codice personalizzato del token:", expectedCode);
+    console.log("Verifica con codice personalizzato del token:", expectedCode);
   } else {
     // Altrimenti usa il codice principale
     expectedCode = CORRECT_CODE;
-    console.log("Usando codice principale:", expectedCode);
+    console.log("Verifica con codice principale:", expectedCode);
   }
 
   if (insertedCode !== expectedCode) {
@@ -1075,31 +1095,16 @@ async function handleCodeSubmit() {
     return;
   }
 
-  // NON impostare subito il tempo di sessione qui
-  // Aspetta il primo click su una porta
-  sessionStartTime = null; // Resetta per sicurezza
-
-  if (await checkTimeLimit()) return;
-
-  document.getElementById("controlPanel").style.display = "block";
-  document.getElementById("authCode").style.display = "none";
-  document.getElementById("auth-form").style.display = "none";
-  document.getElementById("btnCheckCode").style.display = "none";
-  document.getElementById("important").style.display = "none";
-
-  document.getElementById("checkinTimeInfo").style.display = "block";
-  updateCheckinTimeDisplay();
-
-  DEVICES.forEach(updateButtonState);
-  updateStatusBar(); // Aggiorna la barra di stato (mostrerà il tempo pieno)
+  // Esegui il login manuale
+  await performManualLogin();
 }
-
 // =============================================
 // INIZIALIZZAZIONE DELL'APPLICAZIONE
 // =============================================
 
 async function init() {
   console.log("Inizializzazione app...");
+
   // Carica le impostazioni da Firebase
   const firebaseSettings = await loadSettingsFromFirebase();
 
@@ -1137,6 +1142,7 @@ async function init() {
     });
     localStorage.setItem(CODE_VERSION_KEY, currentCodeVersion.toString());
 
+    // Mostra sempre il form di autenticazione quando il codice cambia
     document.getElementById("controlPanel").style.display = "none";
     document.getElementById("authCode").style.display = "block";
     document.getElementById("auth-form").style.display = "block";
@@ -1196,26 +1202,32 @@ async function init() {
       DEVICES.forEach(updateButtonState);
       updateStatusBar();
     } else {
-      // Se non c'è tempo di sessione, mostra il pannello di controllo ma non iniziare il timer
-      sessionStartTime = null;
+      // Se non c'è tempo di sessione, mostra SEMPRE il form di autenticazione
+      document.getElementById("controlPanel").style.display = "none";
+      document.getElementById("authCode").style.display = "block";
+      document.getElementById("auth-form").style.display = "block";
+      document.getElementById("btnCheckCode").style.display = "block";
+      document.getElementById("important").style.display = "block";
     }
+  } else {
+    // Se la sessione è scaduta, mostra SEMPRE il form di autenticazione
+    document.getElementById("controlPanel").style.display = "none";
+    document.getElementById("authCode").style.display = "block";
+    document.getElementById("auth-form").style.display = "block";
+    document.getElementById("btnCheckCode").style.display = "block";
+    document.getElementById("important").style.display = "block";
   }
+
   updateDoorVisibility();
 
   // Configura l'ascolto per cambiamenti in tempo reale
   setupSettingsListener();
   monitorFirebaseConnection();
 
-  // Controlla se è una sessione token
-  
-   const hasToken = await handleSecureToken();
-   console.log("Risultato handleSecureToken:", {
-     hasToken: hasToken,
-     isTokenSession: isTokenSession,
-     currentTokenCustomCode: currentTokenCustomCode,
-   });
+  // Controlla se è una sessione token (solo per riconoscimento, non per accesso automatico)
+  await handleSecureToken();
 
-  // Se è una sessione token, modifica il comportamento
+  // Se è una sessione token, modifica il comportamento UI
   if (isTokenSession) {
     // Nascondi il link all'amministrazione
     const adminLink = document.querySelector('a[href="admin.html"]');
@@ -1240,6 +1252,16 @@ async function init() {
       assistanceBtn.innerHTML =
         '<i class="fab fa-whatsapp"></i> Richiedi nuovo link';
     }
+
+    // Modifica il placeholder del campo codice per indicare che è un link sicuro
+    const authCodeInput = document.getElementById("authCode");
+    if (authCodeInput) {
+      if (currentTokenCustomCode) {
+        authCodeInput.placeholder = "Inserisci il codice dedicato del link";
+      } else {
+        authCodeInput.placeholder = "Inserisci il codice principale";
+      }
+    }
   }
 
   // Configura l'ascolto per i cambiamenti del codice
@@ -1260,7 +1282,6 @@ async function init() {
   updateCheckinTimeDisplay();
   setupCodeChangeListener();
 }
-
 // =============================================
 // AVVIO DELL'APPLICAZIONE
 // =============================================
