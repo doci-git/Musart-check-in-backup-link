@@ -18,6 +18,7 @@ const database = firebase.database();
 // Variabile per tracciare la sessione token
 let isTokenSession = false;
 let currentTokenId = null;
+let sessionStartTime = null; // Traccia quando inizia effettivamente la sessione (al primo click)
 
 const DEVICES = [
   {
@@ -231,6 +232,11 @@ async function checkTimeLimit() {
     return false;
   }
 
+  // Se la sessione non è ancora iniziata (nessun click), non controllare
+  if (!sessionStartTime) {
+    return false;
+  }
+
   const startTime = getStorage("usage_start_time");
   const storedHash = getStorage("usage_hash");
 
@@ -268,6 +274,7 @@ function showFatalError(message) {
 }
 
 // Modifica la funzione showSessionExpired per distinguere tra sessioni normali e token
+
 function showSessionExpired() {
   // Se è una sessione token, usa la gestione specifica già implementata
   if (window.isTokenSession) {
@@ -282,6 +289,7 @@ function showSessionExpired() {
   document.getElementById("controlPanel").classList.add("hidden");
   document.getElementById("sessionExpired").classList.remove("hidden");
   document.getElementById("test2").style.display = "none";
+  
 
   DEVICES.forEach((device) => {
     const btn = document.getElementById(device.button_id);
@@ -296,6 +304,9 @@ function showSessionExpired() {
     securityStatus.textContent = "Scaduta";
     securityStatus.style.color = "var(--error)";
   }
+
+  // Resetta il timer di sessione
+  sessionStartTime = null;
 }
 
 // =============================================
@@ -415,8 +426,21 @@ function updateStatusBar() {
     )} click left`;
   }
 
+  // Se la sessione non è ancora iniziata, mostra il tempo completo
+  if (!sessionStartTime || !timeRemaining) {
+    if (timeRemaining) {
+      const minutes = Math.floor(TIME_LIMIT_MINUTES);
+      const seconds = Math.floor((TIME_LIMIT_MINUTES % 1) * 60);
+      timeRemaining.textContent = `${minutes
+        .toString()
+        .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+      timeRemaining.style.color = "var(--primary)";
+    }
+    return;
+  }
+
   const startTime = getStorage("usage_start_time");
-  if (!startTime || !timeRemaining) return;
+  if (!startTime) return;
 
   const now = Date.now();
   const minutesPassed = (now - parseInt(startTime, 10)) / (1000 * 60);
@@ -698,6 +722,12 @@ function closePopup(buttonId) {
 // =============================================
 
 async function activateDevice(device) {
+  // Se è il primo click, imposta il tempo di inizio sessione
+  if (!sessionStartTime) {
+    sessionStartTime = Date.now();
+    await setUsageStartTime(); // Imposta il timer di sessione
+  }
+
   if (await checkTimeLimit()) return;
 
   if (!isCheckinTime()) {
@@ -1005,7 +1035,10 @@ async function handleCodeSubmit() {
     return;
   }
 
-  await setUsageStartTime();
+  // NON impostare subito il tempo di sessione qui
+  // Aspetta il primo click su una porta
+  sessionStartTime = null; // Resetta per sicurezza
+
   if (await checkTimeLimit()) return;
 
   document.getElementById("controlPanel").style.display = "block";
@@ -1018,7 +1051,7 @@ async function handleCodeSubmit() {
   updateCheckinTimeDisplay();
 
   DEVICES.forEach(updateButtonState);
-  updateStatusBar();
+  updateStatusBar(); // Aggiorna la barra di stato (mostrerà il tempo pieno)
 }
 
 // =============================================
@@ -1101,6 +1134,9 @@ async function init() {
   if (!expired) {
     const startTime = getStorage("usage_start_time");
     if (startTime) {
+      // Se c'è un tempo di sessione salvato, la sessione è attiva
+      sessionStartTime = parseInt(startTime, 10);
+
       document.getElementById("controlPanel").style.display = "block";
       document.getElementById("authCode").style.display = "none";
       document.getElementById("auth-form").style.display = "none";
@@ -1112,9 +1148,11 @@ async function init() {
 
       DEVICES.forEach(updateButtonState);
       updateStatusBar();
+    } else {
+      // Se non c'è tempo di sessione, mostra il pannello di controllo ma non iniziare il timer
+      sessionStartTime = null;
     }
   }
-
   updateDoorVisibility();
 
   // Configura l'ascolto per cambiamenti in tempo reale
