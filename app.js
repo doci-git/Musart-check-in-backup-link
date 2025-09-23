@@ -19,6 +19,8 @@ const database = firebase.database();
 let isTokenSession = false;
 let currentTokenId = null;
 let sessionStartTime = null; // Traccia quando inizia effettivamente la sessione (al primo click)
+// Aggiungi dopo le altre variabili globali
+let currentTokenCustomCode = null;
 
 const DEVICES = [
   {
@@ -524,6 +526,10 @@ function setupCodeChangeListener() {
 }
 
 function checkCodeVersion() {
+
+   if (isTokenSession && currentTokenCustomCode) {
+     return;
+   }
   // Verifica sia su Firebase che su localStorage
   database
     .ref("settings/code_version")
@@ -803,6 +809,9 @@ async function updateGlobalCodeVersion() {
 // =============================================
 
 // Funzione per verificare e gestire i token
+// Funzione per verificare e gestire i token
+
+// Funzione per verificare e gestire i token
 async function handleSecureToken() {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get("token");
@@ -810,6 +819,7 @@ async function handleSecureToken() {
   if (!token) {
     // Sessione normale - nessun token
     isTokenSession = false;
+    currentTokenCustomCode = null;
     return false;
   }
 
@@ -824,6 +834,8 @@ async function handleSecureToken() {
     }
 
     const linkData = snapshot.val();
+    console.log("Dati token ricevuti:", linkData);
+    
     const isValid = validateSecureToken(linkData);
 
     if (!isValid.valid) {
@@ -835,18 +847,26 @@ async function handleSecureToken() {
     // Token valido - imposta sessione token
     isTokenSession = true;
     currentTokenId = token;
+    
+    // Imposta il codice personalizzato se presente
+    if (linkData.customCode && linkData.customCode !== "") {
+      currentTokenCustomCode = linkData.customCode;
+      console.log("Codice personalizzato impostato:", currentTokenCustomCode);
+    } else {
+      currentTokenCustomCode = null;
+      console.log("Nessun codice personalizzato, userò il codice principale");
+    }
 
     // Compila automaticamente il codice
     const authCodeInput = document.getElementById("authCode");
     if (authCodeInput) {
-      const codeSnapshot = await database
-        .ref("settings/secret_code")
-        .once("value");
-      const currentCode = codeSnapshot.val() || "2245";
-      authCodeInput.value = currentCode;
+      // Usa il codice personalizzato se disponibile, altrimenti il codice principale
+      const codeToUse = currentTokenCustomCode || CORRECT_CODE;
+      authCodeInput.value = codeToUse;
+      console.log("Codice inserito automaticamente:", codeToUse);
 
       // Mostra notifica
-      showTokenNotification(isValid.remainingUses);
+      showTokenNotification(isValid.remainingUses, !!currentTokenCustomCode);
 
       // Incrementa il contatore di utilizzi
       await incrementTokenUsage(token, linkData);
@@ -916,7 +936,8 @@ async function incrementTokenUsage(token, linkData) {
 }
 
 // Mostra notifica di token valido
-function showTokenNotification(remainingUses) {
+// Mostra notifica di token valido
+function showTokenNotification(remainingUses, hasCustomCode) {
   const notification = document.createElement("div");
   notification.style.cssText = `
     position: fixed;
@@ -931,14 +952,19 @@ function showTokenNotification(remainingUses) {
     display: flex;
     align-items: center;
     gap: 10px;
-    max-width: 300px;
+    max-width: 350px;
   `;
+
+  const customCodeInfo = hasCustomCode ? 
+    '<div style="font-size: 12px; opacity: 0.9;">Codice dedicato attivo</div>' : 
+    '<div style="font-size: 12px; opacity: 0.9;">Utilizza il codice principale</div>';
 
   notification.innerHTML = `
     <i class="fas fa-check-circle"></i>
     <div>
       <div>Accesso autorizzato tramite link sicuro</div>
       <div style="font-size: 12px; opacity: 0.9;">Utilizzi rimanenti: ${remainingUses}</div>
+      ${customCodeInfo}
     </div>
     <button onclick="this.parentElement.remove()" style="
       background: none;
@@ -1030,7 +1056,21 @@ function startTokenExpirationCheck(expirationTime) {
 
 async function handleCodeSubmit() {
   const insertedCode = document.getElementById("authCode").value.trim();
-  if (insertedCode !== CORRECT_CODE) {
+
+  // Determina quale codice usare per la verifica
+  let expectedCode;
+
+  if (isTokenSession && currentTokenCustomCode) {
+    // Se è una sessione token con codice personalizzato, usa quello
+    expectedCode = currentTokenCustomCode;
+    console.log("Usando codice personalizzato del token:", expectedCode);
+  } else {
+    // Altrimenti usa il codice principale
+    expectedCode = CORRECT_CODE;
+    console.log("Usando codice principale:", expectedCode);
+  }
+
+  if (insertedCode !== expectedCode) {
     alert("Codice errato! Riprova.");
     return;
   }
@@ -1059,6 +1099,7 @@ async function handleCodeSubmit() {
 // =============================================
 
 async function init() {
+  console.log("Inizializzazione app...");
   // Carica le impostazioni da Firebase
   const firebaseSettings = await loadSettingsFromFirebase();
 
@@ -1067,6 +1108,12 @@ async function init() {
     CORRECT_CODE = firebaseSettings.secret_code || "2245";
     MAX_CLICKS = parseInt(firebaseSettings.max_clicks) || 3;
     TIME_LIMIT_MINUTES = parseInt(firebaseSettings.time_limit_minutes) || 50000;
+
+    console.log("Impostazioni caricate:", {
+      CORRECT_CODE: CORRECT_CODE,
+      MAX_CLICKS: MAX_CLICKS,
+      TIME_LIMIT_MINUTES: TIME_LIMIT_MINUTES,
+    });
 
     // Aggiorna localStorage
     localStorage.setItem("secret_code", CORRECT_CODE);
@@ -1160,7 +1207,13 @@ async function init() {
   monitorFirebaseConnection();
 
   // Controlla se è una sessione token
-  const hasToken = await handleSecureToken();
+  
+   const hasToken = await handleSecureToken();
+   console.log("Risultato handleSecureToken:", {
+     hasToken: hasToken,
+     isTokenSession: isTokenSession,
+     currentTokenCustomCode: currentTokenCustomCode,
+   });
 
   // Se è una sessione token, modifica il comportamento
   if (isTokenSession) {

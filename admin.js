@@ -475,7 +475,12 @@ function generateUniqueId() {
 }
 
 // Salva i dati del link sicuro
+// Salva i dati del link sicuro
+// Salva i dati del link sicuro
 function saveSecureLink(linkId, expirationTime, maxUsage, expirationHours) {
+  const customCodeInput = document.getElementById('linkCustomCode');
+  const customCode = customCodeInput ? customCodeInput.value.trim() : '';
+  
   const linkData = {
     id: linkId,
     created: Date.now(),
@@ -484,16 +489,24 @@ function saveSecureLink(linkId, expirationTime, maxUsage, expirationHours) {
     usedCount: 0,
     expirationHours: expirationHours,
     status: "active",
+    customCode: customCode || null  // Aggiungi il codice personalizzato
   };
+
+  console.log("Salvando link con dati:", linkData);
 
   // Salva su Firebase
   database
     .ref("secure_links/" + linkId)
     .set(linkData)
     .then(() => {
-      console.log("Link salvato su Firebase");
+      console.log("Link salvato su Firebase con successo");
       updateActiveLinksList();
       updateLinkStatistics();
+      
+      // Pulisci il campo del codice personalizzato
+      if (customCodeInput) {
+        customCodeInput.value = '';
+      }
     })
     .catch((error) => {
       console.error("Errore nel salvataggio del link:", error);
@@ -593,7 +606,13 @@ function updateActiveLinksList() {
                 <i class="fas fa-ban"></i> Revoca
             </button>
           </div>
+          
         `;
+          if (link.customCode) {
+            linkElement.innerHTML += `<div style="font-size: 11px; color: var(--primary); margin-top: 5px;">
+      <i class="fas fa-key"></i> Codice dedicato: ${link.customCode}
+    </div>`;
+          }
 
           container.appendChild(linkElement);
         });
