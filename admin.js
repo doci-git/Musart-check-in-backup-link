@@ -25,17 +25,29 @@ const adminPasswordInput = document.getElementById("adminPassword");
 const loginError = document.getElementById("loginError");
 const btnLogin = document.getElementById("btnLogin");
 
+const currentCodeEl = document.getElementById("currentCode");
+const currentMaxClicksEl = document.getElementById("currentMaxClicks");
+const currentTimeLimitEl = document.getElementById("currentTimeLimit");
+const currentCheckinTimeRangeEl = document.getElementById(
+  "currentCheckinTimeRange"
+);
+const checkinTimeStatusEl = document.getElementById("checkinTimeStatus");
+const extraDoor1VisibleEl = document.getElementById("extraDoor1Visible");
+const extraDoor2VisibleEl = document.getElementById("extraDoor2Visible");
+
 // Carica le impostazioni all'avvio
 document.addEventListener("DOMContentLoaded", function () {
-  const isAuthenticated =
-    sessionStorage.getItem("adminAuthenticated") === "true";
+  // Verifica se l'utente è già autenticato
+  const isAuthenticated = localStorage.getItem("adminAuthenticated") === "true";
 
   if (isAuthenticated) {
+    // Se autenticato, nascondi il modale e mostra il contenuto
     loginModal.classList.add("hidden");
     adminContainer.style.display = "block";
     loadSettings();
   }
 
+  // Focus sul campo password
   adminPasswordInput.focus();
 });
 
@@ -43,14 +55,18 @@ document.addEventListener("DOMContentLoaded", function () {
 btnLogin.addEventListener("click", function () {
   const password = adminPasswordInput.value.trim();
   if (password === ADMIN_PASSWORD) {
-    sessionStorage.setItem("adminAuthenticated", "true");
+    // Password corretta
+    localStorage.setItem("adminAuthenticated", "true");
     loginModal.classList.add("hidden");
     adminContainer.style.display = "block";
     loadSettings();
   } else {
+    // Password errata
     loginError.style.display = "block";
     adminPasswordInput.value = "";
     adminPasswordInput.focus();
+
+    // Aggiungi effetto shake al modale
     loginModal.classList.add("shake");
     setTimeout(() => {
       loginModal.classList.remove("shake");
@@ -77,58 +93,104 @@ async function saveSettingToFirebase(key, value) {
   }
 }
 
+// Funzione per caricare le impostazioni da Firebase
+async function loadSettingsFromFirebase() {
+  try {
+    const snapshot = await database.ref("settings").once("value");
+    if (snapshot.exists()) {
+      return snapshot.val();
+    }
+    return null;
+  } catch (error) {
+    console.error(
+      "Errore nel caricamento delle impostazioni da Firebase:",
+      error
+    );
+    return null;
+  }
+}
+
 // Funzione per caricare le impostazioni
 async function loadSettings() {
-  database.ref("settings").on("value", (snapshot) => {
-    if (snapshot.exists()) {
-      const settings = snapshot.val();
+  // Prova a caricare da Firebase
+  const firebaseSettings = await loadSettingsFromFirebase();
 
-      // Aggiorna UI con valori correnti
-      document.getElementById("currentCode").value =
-        settings.secret_code || "2245";
-      document.getElementById("currentMaxClicks").value =
-        settings.max_clicks || "3";
-      document.getElementById("currentTimeLimit").value =
-        settings.time_limit_minutes || "50000";
+  if (firebaseSettings) {
+    // Usa le impostazioni da Firebase
+    currentCodeEl.value = firebaseSettings.secret_code || "2245";
+    currentMaxClicksEl.value = firebaseSettings.max_clicks || "3";
+    currentTimeLimitEl.value = firebaseSettings.time_limit_minutes || "50000";
 
-      document.getElementById("newMaxClicks").value =
-        settings.max_clicks || "3";
-      document.getElementById("newTimeLimit").value =
-        settings.time_limit_minutes || "50000";
+    document.getElementById("newMaxClicks").value =
+      firebaseSettings.max_clicks || "3";
+    document.getElementById("newTimeLimit").value =
+      firebaseSettings.time_limit_minutes || "50000";
 
-      // Carica le impostazioni orario check-in
-      const checkinStartTime = settings.checkin_start_time || "14:00";
-      const checkinEndTime = settings.checkin_end_time || "22:00";
-      document.getElementById("checkinStartTime").value = checkinStartTime;
-      document.getElementById("checkinEndTime").value = checkinEndTime;
-      document.getElementById(
-        "currentCheckinTimeRange"
-      ).value = `${checkinStartTime} - ${checkinEndTime}`;
+    // Aggiorna anche il localStorage
+    localStorage.setItem("secret_code", firebaseSettings.secret_code || "2245");
+    localStorage.setItem("max_clicks", firebaseSettings.max_clicks || "3");
+    localStorage.setItem(
+      "time_limit_minutes",
+      firebaseSettings.time_limit_minutes || "50000"
+    );
+  } else {
+    // Fallback al localStorage
+    const secretCode = localStorage.getItem("secret_code") || "2245";
+    const maxClicks = localStorage.getItem("max_clicks") || "3";
+    const timeLimit = localStorage.getItem("time_limit_minutes") || "50000";
 
-      // Carica lo stato del controllo orario
-      const checkinTimeEnabled = settings.checkin_time_enabled;
-      const isCheckinTimeEnabled =
-        checkinTimeEnabled === undefined ? true : checkinTimeEnabled;
+    currentCodeEl.value = secretCode;
+    currentMaxClicksEl.value = maxClicks;
+    currentTimeLimitEl.value = timeLimit;
 
-      if (isCheckinTimeEnabled) {
-        document.getElementById("checkinTimeStatus").innerHTML =
-          '<span class="status-indicator status-on"></span> Attivo';
-        document
-          .getElementById("btnToggleCheckinTime")
-          .classList.add("btn-success");
-        document.getElementById("btnToggleCheckinTime").innerHTML =
-          '<i class="fas fa-toggle-on"></i> Disattiva Controllo Orario';
-      } else {
-        document.getElementById("checkinTimeStatus").innerHTML =
-          '<span class="status-indicator status-off"></span> Disattivato';
-        document
-          .getElementById("btnToggleCheckinTime")
-          .classList.add("btn-error");
-        document.getElementById("btnToggleCheckinTime").innerHTML =
-          '<i class="fas fa-toggle-off"></i> Attiva Controllo Orario';
-      }
+    document.getElementById("newMaxClicks").value = maxClicks;
+    document.getElementById("newTimeLimit").value = timeLimit;
+
+    // Salva le impostazioni su Firebase per futuri utilizzi
+    saveSettingToFirebase("secret_code", secretCode);
+    saveSettingToFirebase("max_clicks", maxClicks);
+    saveSettingToFirebase("time_limit_minutes", timeLimit);
+  }
+
+  // Carica le impostazioni orario check-in
+  const checkinStartTime =
+    localStorage.getItem("checkin_start_time") || "14:00";
+  const checkinEndTime = localStorage.getItem("checkin_end_time") || "22:00";
+  document.getElementById("checkinStartTime").value = checkinStartTime;
+  document.getElementById("checkinEndTime").value = checkinEndTime;
+  currentCheckinTimeRangeEl.value = `${checkinStartTime} - ${checkinEndTime}`;
+
+  // Carica lo stato del controllo orario
+  const checkinTimeEnabled = localStorage.getItem("checkin_time_enabled");
+  const isCheckinTimeEnabled =
+    checkinTimeEnabled === null ? true : checkinTimeEnabled === "true";
+
+  if (isCheckinTimeEnabled) {
+    checkinTimeStatusEl.innerHTML =
+      '<span class="status-indicator status-on"></span> Attivo';
+    document
+      .getElementById("btnToggleCheckinTime")
+      .classList.add("btn-success");
+    document.getElementById("btnToggleCheckinTime").innerHTML =
+      '<i class="fas fa-toggle-on"></i> Disattiva Controllo Orario';
+  } else {
+    checkinTimeStatusEl.innerHTML =
+      '<span class="status-indicator status-off"></span> Disattivato';
+    document.getElementById("btnToggleCheckinTime").classList.add("btn-error");
+    document.getElementById("btnToggleCheckinTime").innerHTML =
+      '<i class="fas fa-toggle-off"></i> Attiva Controllo Orario';
+  }
+
+  // Carica la visibilità delle porte extra
+  try {
+    const devices = JSON.parse(localStorage.getItem("devices")) || [];
+    if (devices.length >= 4) {
+      extraDoor1VisibleEl.checked = devices[2].visible || false;
+      extraDoor2VisibleEl.checked = devices[3].visible || false;
     }
-  });
+  } catch (e) {
+    console.error("Errore nel caricamento delle porte extra:", e);
+  }
 
   // Carica i link attivi e statistiche
   updateActiveLinksList();
@@ -145,20 +207,26 @@ document
       return;
     }
 
+    // Salva su Firebase
     const success = await saveSettingToFirebase("secret_code", newCode);
 
     if (success) {
+      // Aggiorna localStorage
+      localStorage.setItem("secret_code", newCode);
+
       // Aggiorna la versione del codice
-      const codeVersionSnapshot = await database
-        .ref("settings/code_version")
-        .once("value");
-      const currentVersion = codeVersionSnapshot.exists()
-        ? parseInt(codeVersionSnapshot.val())
-        : 1;
+      const currentVersion =
+        parseInt(localStorage.getItem("code_version")) || 1;
       const newVersion = currentVersion + 1;
+      localStorage.setItem("code_version", newVersion.toString());
       await saveSettingToFirebase("code_version", newVersion);
 
-      document.getElementById("currentCode").value = newCode;
+      // Aggiorna timestamp
+      const timestamp = Date.now().toString();
+      localStorage.setItem("last_code_update", timestamp);
+      await saveSettingToFirebase("last_code_update", timestamp);
+
+      currentCodeEl.value = newCode;
       document.getElementById("newCode").value = "";
 
       alert(
@@ -186,6 +254,7 @@ document
       return;
     }
 
+    // Salva su Firebase
     const maxClicksSuccess = await saveSettingToFirebase(
       "max_clicks",
       newMaxClicks
@@ -196,8 +265,12 @@ document
     );
 
     if (maxClicksSuccess && timeLimitSuccess) {
-      document.getElementById("currentMaxClicks").value = newMaxClicks;
-      document.getElementById("currentTimeLimit").value = newTimeLimit;
+      // Aggiorna localStorage
+      localStorage.setItem("max_clicks", newMaxClicks);
+      localStorage.setItem("time_limit_minutes", newTimeLimit);
+
+      currentMaxClicksEl.value = newMaxClicks;
+      currentTimeLimitEl.value = newTimeLimit;
 
       alert("Impostazioni aggiornate con successo!");
     } else {
@@ -218,6 +291,7 @@ document
       return;
     }
 
+    // Converti in minuti per il confronto
     const [startHours, startMinutes] = newCheckinStartTime
       .split(":")
       .map(Number);
@@ -226,6 +300,7 @@ document
     const startTimeInMinutes = startHours * 60 + startMinutes;
     const endTimeInMinutes = endHours * 60 + endMinutes;
 
+    // Verifica che l'orario di fine sia dopo l'orario di inizio
     if (endTimeInMinutes <= startTimeInMinutes) {
       document.getElementById("timeRangeError").style.display = "block";
       return;
@@ -233,6 +308,7 @@ document
 
     document.getElementById("timeRangeError").style.display = "none";
 
+    // Salva su Firebase
     const startTimeSuccess = await saveSettingToFirebase(
       "checkin_start_time",
       newCheckinStartTime
@@ -243,9 +319,11 @@ document
     );
 
     if (startTimeSuccess && endTimeSuccess) {
-      document.getElementById(
-        "currentCheckinTimeRange"
-      ).value = `${newCheckinStartTime} - ${newCheckinEndTime}`;
+      // Aggiorna localStorage
+      localStorage.setItem("checkin_start_time", newCheckinStartTime);
+      localStorage.setItem("checkin_end_time", newCheckinEndTime);
+
+      currentCheckinTimeRangeEl.value = `${newCheckinStartTime} - ${newCheckinEndTime}`;
       alert("Orario di check-in aggiornato con successo!");
     } else {
       alert("Errore nel salvataggio dell'orario di check-in. Riprovare.");
@@ -256,29 +334,34 @@ document
 document
   .getElementById("btnToggleCheckinTime")
   .addEventListener("click", async function () {
-    const checkinTimeEnabledSnapshot = await database
-      .ref("settings/checkin_time_enabled")
-      .once("value");
-    const currentStatus = checkinTimeEnabledSnapshot.exists()
-      ? checkinTimeEnabledSnapshot.val()
-      : true;
-    const newStatus = !currentStatus;
+    const currentStatus = localStorage.getItem("checkin_time_enabled");
+    let newStatus;
 
+    if (currentStatus === null) {
+      newStatus = false;
+    } else {
+      newStatus = currentStatus !== "true";
+    }
+
+    // Salva su Firebase
     const success = await saveSettingToFirebase(
       "checkin_time_enabled",
-      newStatus
+      newStatus.toString()
     );
 
     if (success) {
+      // Aggiorna localStorage
+      localStorage.setItem("checkin_time_enabled", newStatus.toString());
+
       if (newStatus) {
-        document.getElementById("checkinTimeStatus").innerHTML =
+        checkinTimeStatusEl.innerHTML =
           '<span class="status-indicator status-on"></span> Attivo';
         this.classList.remove("btn-error");
         this.classList.add("btn-success");
         this.innerHTML =
           '<i class="fas fa-toggle-on"></i> Disattiva Controllo Orario';
       } else {
-        document.getElementById("checkinTimeStatus").innerHTML =
+        checkinTimeStatusEl.innerHTML =
           '<span class="status-indicator status-off"></span> Disattivato';
         this.classList.remove("btn-success");
         this.classList.add("btn-error");
@@ -296,6 +379,40 @@ document
     }
   });
 
+// Gestione visibilità porte extra
+document
+  .getElementById("btnExtraDoorsVisibility")
+  .addEventListener("click", function () {
+    try {
+      // Carica i dispositivi esistenti o crea un array vuoto
+      let devices = JSON.parse(localStorage.getItem("devices")) || [];
+
+      // Se non ci sono dispositivi, crea la struttura base
+      if (devices.length === 0) {
+        devices = [
+          { button_id: "MainDoor", visible: true },
+          { button_id: "AptDoor", visible: true },
+          { button_id: "ExtraDoor1", visible: extraDoor1VisibleEl.checked },
+          { button_id: "ExtraDoor2", visible: extraDoor2VisibleEl.checked },
+        ];
+      } else {
+        // Aggiorna solo le porte extra
+        if (devices.length > 2)
+          devices[2].visible = extraDoor1VisibleEl.checked;
+        if (devices.length > 3)
+          devices[3].visible = extraDoor2VisibleEl.checked;
+      }
+
+      // Salva nel localStorage
+      localStorage.setItem("devices", JSON.stringify(devices));
+
+      alert("Visibilità porte extra aggiornata con successo!");
+    } catch (e) {
+      console.error("Errore nel salvataggio delle porte extra:", e);
+      alert("Si è verificato un errore durante il salvataggio.");
+    }
+  });
+
 // Gestione generazione link sicuri
 document
   .getElementById("btnGenerateSecureLink")
@@ -305,17 +422,23 @@ document
     );
     const maxUsage = parseInt(document.getElementById("linkUsage").value);
 
+    // Genera ID unico
     const linkId = generateUniqueId();
     const expirationTime = Date.now() + expirationHours * 60 * 60 * 1000;
 
+    // Ottieni l'URL base
     const baseUrl = window.location.origin + window.location.pathname;
     const indexUrl = baseUrl.replace("admin.html", "index.html");
 
+    // Genera il link
     const secureLink = `${indexUrl}?token=${linkId}`;
 
     document.getElementById("generatedSecureLink").value = secureLink;
 
+    // Salva i dati del link
     saveSecureLink(linkId, expirationTime, maxUsage, expirationHours);
+
+    // Aggiorna la lista dei link attivi
     updateActiveLinksList();
     updateLinkStatistics();
   });
@@ -334,6 +457,7 @@ document
     linkInput.select();
     document.execCommand("copy");
 
+    // Feedback visivo
     const btn = document.getElementById("btnCopySecureLink");
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-check"></i> Copiato!';
@@ -362,6 +486,7 @@ function saveSecureLink(linkId, expirationTime, maxUsage, expirationHours) {
     status: "active",
   };
 
+  // Salva su Firebase
   database
     .ref("secure_links/" + linkId)
     .set(linkData)
@@ -372,6 +497,14 @@ function saveSecureLink(linkId, expirationTime, maxUsage, expirationHours) {
     })
     .catch((error) => {
       console.error("Errore nel salvataggio del link:", error);
+      // Fallback al localStorage se Firebase non funziona
+      const secureLinks = JSON.parse(
+        localStorage.getItem("secure_links") || "{}"
+      );
+      secureLinks[linkId] = linkData;
+      localStorage.setItem("secure_links", JSON.stringify(secureLinks));
+      updateActiveLinksList();
+      updateLinkStatistics();
     });
 }
 
@@ -381,6 +514,7 @@ function updateActiveLinksList() {
   container.innerHTML =
     '<p style="color: #666; text-align: center;">Caricamento...</p>';
 
+  // Recupera i link da Firebase
   database
     .ref("secure_links")
     .orderByChild("created")
@@ -405,7 +539,13 @@ function updateActiveLinksList() {
         .sort((a, b) => b.created - a.created)
         .forEach((link) => {
           const linkElement = document.createElement("div");
-          linkElement.className = "link-item";
+          linkElement.style.cssText = `
+          padding: 10px;
+          margin: 8px 0;
+          background: #f8f9fa;
+          border-radius: 6px;
+          border-left: 4px solid var(--success);
+        `;
 
           const expiresIn = Math.max(
             0,
@@ -414,38 +554,129 @@ function updateActiveLinksList() {
           const usageText = `${link.usedCount}/${link.maxUsage} utilizzi`;
 
           linkElement.innerHTML = `
-                    <div style="font-size: 11px; color: #666;">
-                        Creato: ${new Date(link.created).toLocaleString(
-                          "it-IT"
-                        )}
-                    </div>
-                    <div style="font-weight: bold; margin: 3px 0; color: var(--dark);">
-                        Scade in: ${expiresIn}h • ${usageText}
-                    </div>
-                    <div style="font-size: 12px; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px;">
-                        ${link.id}
-                    </div>
-                    <div class="link-actions">
-                        <button onclick="copySecureLink('${
-                          link.id
-                        }')" class="btn">
-                            <i class="fas fa-copy"></i> Copia
-                        </button>
-                        <button onclick="revokeSecureLink('${
-                          link.id
-                        }')" class="btn btn-error">
-                            <i class="fas fa-ban"></i> Revoca
-                        </button>
-                    </div>
-                `;
+          <div style="font-size: 11px; color: #666;">
+            Creato: ${new Date(link.created).toLocaleString("it-IT")}
+          </div>
+          <div style="font-weight: bold; margin: 3px 0; color: var(--dark);">
+            Scade in: ${expiresIn}h • ${usageText}
+          </div>
+          <div style="font-size: 12px; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px;">
+            <a href="${
+              window.location.origin +
+              window.location.pathname.replace("admin.html", "index.html")
+            }?token=${link.id}" 
+               target="_blank" style="color: var(--primary);">
+               ${link.id}
+            </a>
+          </div>
+          <div style="display: flex; gap: 5px;">
+            <button onclick="copySecureLink('${link.id}')" style="
+                background: var(--primary);
+                color: white;
+                border: none;
+                padding: 4px 8px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 11px;
+            ">
+                <i class="fas fa-copy"></i> Copia
+            </button>
+            <button onclick="revokeSecureLink('${link.id}')" style="
+                background: var(--error);
+                color: white;
+                border: none;
+                padding: 4px 8px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 11px;
+            ">
+                <i class="fas fa-ban"></i> Revoca
+            </button>
+          </div>
+        `;
 
           container.appendChild(linkElement);
         });
     })
     .catch((error) => {
       console.error("Errore nel recupero dei link:", error);
-      container.innerHTML =
-        '<p style="color: #666; text-align: center;">Errore nel caricamento dei link</p>';
+      // Fallback al localStorage
+      const secureLinks = JSON.parse(
+        localStorage.getItem("secure_links") || "{}"
+      );
+      const activeLinks = Object.values(secureLinks).filter(
+        (link) => link.status === "active" && link.expiration > Date.now()
+      );
+
+      if (activeLinks.length === 0) {
+        container.innerHTML =
+          '<p style="color: #666; text-align: center;">Nessun link attivo</p>';
+        return;
+      }
+
+      container.innerHTML = "";
+      activeLinks
+        .sort((a, b) => b.created - a.created)
+        .forEach((link) => {
+          const linkElement = document.createElement("div");
+          linkElement.style.cssText = `
+          padding: 10px;
+          margin: 8px 0;
+          background: #f8f9fa;
+          border-radius: 6px;
+          border-left: 4px solid var(--success);
+        `;
+
+          const expiresIn = Math.max(
+            0,
+            Math.floor((link.expiration - Date.now()) / (1000 * 60 * 60))
+          );
+          const usageText = `${link.usedCount}/${link.maxUsage} utilizzi`;
+
+          linkElement.innerHTML = `
+          <div style="font-size: 11px; color: #666;">
+            Creato: ${new Date(link.created).toLocaleString("it-IT")}
+          </div>
+          <div style="font-weight: bold; margin: 3px 0; color: var(--dark);">
+            Scade in: ${expiresIn}h • ${usageText}
+          </div>
+          <div style="font-size: 12px; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px;">
+            <a href="${
+              window.location.origin +
+              window.location.pathname.replace("admin.html", "index.html")
+            }?token=${link.id}" 
+               target="_blank" style="color: var(--primary);">
+               ${link.id}
+            </a>
+          </div>
+          <div style="display: flex; gap: 5px;">
+            <button onclick="copySecureLink('${link.id}')" style="
+                background: var(--primary);
+                color: white;
+                border: none;
+                padding: 4px 8px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 11px;
+            ">
+                <i class="fas fa-copy"></i> Copia
+            </button>
+            <button onclick="revokeSecureLink('${link.id}')" style="
+                background: var(--error);
+                color: white;
+                border: none;
+                padding: 4px 8px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 11px;
+            ">
+                <i class="fas fa-ban"></i> Revoca
+            </button>
+          </div>
+        `;
+
+          container.appendChild(linkElement);
+        });
     });
 }
 
@@ -467,8 +698,7 @@ function copySecureLink(linkId) {
 
 // Revoca link
 function revokeSecureLink(linkId) {
-  if (!confirm("Sei sicuro di voler revocare questo link?")) return;
-
+  // Prima prova a revocare su Firebase
   database
     .ref("secure_links/" + linkId)
     .update({
@@ -481,13 +711,25 @@ function revokeSecureLink(linkId) {
       alert("Link revocato con successo!");
     })
     .catch((error) => {
-      console.error("Errore nella revoca del link:", error);
-      alert("Si è verificato un errore durante la revoca del link.");
+      console.error("Errore nella revoca del link su Firebase:", error);
+      // Fallback al localStorage
+      const secureLinks = JSON.parse(
+        localStorage.getItem("secure_links") || "{}"
+      );
+      if (secureLinks[linkId]) {
+        secureLinks[linkId].status = "revoked";
+        secureLinks[linkId].expiration = Date.now();
+        localStorage.setItem("secure_links", JSON.stringify(secureLinks));
+        updateActiveLinksList();
+        updateLinkStatistics();
+        alert("Link revocato con successo!");
+      }
     });
 }
 
 // Aggiorna le statistiche
 function updateLinkStatistics() {
+  // Prima prova a recuperare da Firebase
   database
     .ref("secure_links")
     .once("value")
@@ -510,6 +752,22 @@ function updateLinkStatistics() {
     })
     .catch((error) => {
       console.error("Errore nel recupero delle statistiche:", error);
+      // Fallback al localStorage
+      const secureLinks = JSON.parse(
+        localStorage.getItem("secure_links") || "{}"
+      );
+      const links = Object.values(secureLinks);
+
+      document.getElementById("totalLinks").textContent = links.length;
+      document.getElementById("activeLinks").textContent = links.filter(
+        (l) => l.status === "active" && l.expiration > Date.now()
+      ).length;
+      document.getElementById("usedLinks").textContent = links.filter(
+        (l) => l.status === "used"
+      ).length;
+      document.getElementById("expiredLinks").textContent = links.filter(
+        (l) => l.status === "expired" || l.status === "revoked"
+      ).length;
     });
 }
 
@@ -517,6 +775,6 @@ function updateLinkStatistics() {
 document.addEventListener("DOMContentLoaded", function () {
   updateActiveLinksList();
   updateLinkStatistics();
-  setInterval(updateActiveLinksList, 60000);
-  setInterval(updateLinkStatistics, 5000);
+  setInterval(updateActiveLinksList, 60000); // Controlla ogni minuto
+  setInterval(updateLinkStatistics, 5000); // Aggiorna stats ogni 5 secondi
 });
