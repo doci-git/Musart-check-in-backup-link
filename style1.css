@@ -4,7 +4,7 @@
             --secondary: #00A699;
             --dark: #484848;
             --light: #FFFFFF;
-            --grey: #F7F7F7;
+            --grey: #f7f7f7;
             --error: #FF5A5F;
             --warning: #FFB400;
             --success: #00A699;
@@ -64,7 +64,7 @@
         }
 
         .admin-section {
-            background: var(--grey);
+            background:rgb(242, 242, 242);
             border-radius: var(--border-radius);
             padding: 20px;
             margin-bottom: 25px;
