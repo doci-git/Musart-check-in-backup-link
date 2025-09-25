@@ -1098,6 +1098,45 @@ async function handleCodeSubmit() {
   // Esegui il login manuale
   await performManualLogin();
 }
+
+
+// Aggiungi a app.js - Funzione per verificare se la sessione è bloccata
+function isSessionStuck() {
+    try {
+        const authVerified = localStorage.getItem("auth_verified");
+        const authTimestamp = localStorage.getItem("auth_timestamp");
+        const usageStartTime = localStorage.getItem("usage_start_time");
+        
+        // Se c'è autenticazione ma il timer di sessione è scaduto
+        if (authVerified === "true" && authTimestamp) {
+            const authTime = parseInt(authTimestamp, 10);
+            const now = Date.now();
+            const timeElapsed = now - authTime;
+            
+            // Se l'autenticazione è più vecchia di 24 ore, probabilmente è bloccata
+            if (timeElapsed > 24 * 60 * 60 * 1000) {
+                return true;
+            }
+        }
+        
+        // Se c'è un tempo di utilizzo ma la sessione è scaduta
+        if (usageStartTime) {
+            const startTime = parseInt(usageStartTime, 10);
+            const now = Date.now();
+            const minutesPassed = (now - startTime) / (1000 * 60);
+            
+            if (minutesPassed > TIME_LIMIT_MINUTES + 60) { // 1 ora dopo la scadenza
+                return true;
+            }
+        }
+        
+        return false;
+    } catch (error) {
+        console.error("Errore nel controllo sessione bloccata:", error);
+        return false;
+    }
+}
+
 // =============================================
 // INIZIALIZZAZIONE DELL'APPLICAZIONE
 // =============================================
@@ -1130,6 +1169,12 @@ async function init() {
       currentCodeVersion = parseInt(firebaseSettings.code_version);
       localStorage.setItem("code_version", currentCodeVersion.toString());
     }
+  }
+
+  // Verifica se la sessione potrebbe essere bloccata
+  if (isSessionStuck()) {
+    console.warn("Rilevata possibile sessione bloccata");
+    // Potresti mostrare un messaggio all'utente qui
   }
 
   const savedCodeVersion =

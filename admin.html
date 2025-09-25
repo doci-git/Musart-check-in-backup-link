@@ -223,6 +223,92 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Aggiungi questa sezione dopo le altre sezioni admin -->
+                <div class="admin-section">
+                    <h3><i class="fas fa-mobile-alt"></i> Ripristino Sessione Locale</h3>
+                    <p>Utilizza questa funzione se la sessione risulta bloccata sul tuo dispositivo.</p>
+                    <div class="warning-box">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Attenzione:</strong> Questa azione ripristina solo la sessione sul dispositivo corrente.
+                    </div>
+                    <button id="btnResetLocalSession" class="btn btn-warning">
+                        <i class="fas fa-sync-alt"></i> Ripristina Sessione Locale
+                    </button>
+                    <div id="localResetResult" class="reset-result"></div>
+                </div>
+
+                <!-- Aggiungi questa sezione dopo le altre sezioni admin -->
+                <div class="admin-section">
+                    <h3><i class="fas fa-door-open"></i> Apertura Porte Remota</h3>
+                    <p>Apri le porte direttamente dal pannello di controllo.</p>
+                    
+                    <div class="door-controls-admin">
+                        <!-- Porta Principale -->
+                        <div class="door-control-admin">
+                            <h4><i class="fas fa-building"></i> Porta Principale</h4>
+                            <div class="door-status">
+                                <span class="status-indicator" id="mainDoorStatus"></span>
+                                <span id="mainDoorStatusText">Stato: Non verificato</span>
+                            </div>
+                            <button id="btnOpenMainDoor" class="btn btn-door">
+                                <i class="fas fa-key"></i> Apri Porta Principale
+                            </button>
+                            <div id="mainDoorResult" class="door-result"></div>
+                        </div>
+
+                        <!-- Porta Appartamento -->
+                        <div class="door-control-admin">
+                            <h4><i class="fas fa-home"></i> Porta Appartamento</h4>
+                            <div class="door-status">
+                                <span class="status-indicator" id="aptDoorStatus"></span>
+                                <span id="aptDoorStatusText">Stato: Non verificato</span>
+                            </div>
+                            <button id="btnOpenAptDoor" class="btn btn-door">
+                                <i class="fas fa-key"></i> Apri Porta Appartamento
+                            </button>
+                            <div id="aptDoorResult" class="door-result"></div>
+                        </div>
+
+                        
+                        <!-- Porta Extra 1 -->
+                        <div class="door-control-admin" id="extraDoor1Admin" >
+                            <h4><i class="fas fa-door-open"></i> Porta Extra 1</h4>
+                            <div class="door-status">
+                                <span class="status-indicator" id="extraDoor1Status"></span>
+                                <span id="extraDoor1StatusText">Stato: Non verificato</span>
+                            </div>
+                            <button id="btnOpenExtraDoor1" class="btn btn-door">
+                                <i class="fas fa-key"></i> Apri Porta Extra 1
+                            </button>
+                            <div id="extraDoor1Result" class="door-result"></div>
+                        </div>
+
+                        <!-- Porta Extra 2 -->
+                        <div class="door-control-admin" id="extraDoor2Admin" style="display: none;">
+                            <h4><i class="fas fa-door-open"></i> Porta Extra 2</h4>
+                            <div class="door-status">
+                                <span class="status-indicator" id="extraDoor2Status"></span>
+                                <span id="extraDoor2StatusText">Stato: Non verificato</span>
+                            </div>
+                            <button id="btnOpenExtraDoor2" class="btn btn-door">
+                                <i class="fas fa-key"></i> Apri Porta Extra 2
+                            </button>
+                            <div id="extraDoor2Result" class="door-result"></div>
+                        </div>
+                    </div>
+
+                    <!-- Apertura Multipla -->
+                    <div class="bulk-actions" style="display: none;">
+                        <h4><i class="fas fa-bolt"></i> Azioni Rapide</h4>
+                        <button id="btnOpenAllDoors" class="btn btn-bulk">
+                            <i class="fas fa-sync-alt"></i> Apri Tutte le Porte
+                        </button>
+                        <button id="btnCheckAllDoors" class="btn btn-bulk">
+                            <i class="fas fa-search"></i> Verifica Stato Tutte le Porte
+                        </button>
+                    </div>
+                </div>
         </div>
     </div>
 

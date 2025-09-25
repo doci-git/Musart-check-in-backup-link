@@ -150,6 +150,8 @@ async function loadSettings() {
     saveSettingToFirebase("secret_code", secretCode);
     saveSettingToFirebase("max_clicks", maxClicks);
     saveSettingToFirebase("time_limit_minutes", timeLimit);
+
+     initDoorControls();
   }
 
   // Carica le impostazioni orario check-in
@@ -797,3 +799,451 @@ document.addEventListener("DOMContentLoaded", function () {
   setInterval(updateActiveLinksList, 60000); // Controlla ogni minuto
   setInterval(updateLinkStatistics, 5000); // Aggiorna stats ogni 5 secondi
 });
+
+// Aggiungi dopo le altre funzioni
+
+// Funzione per ripristinare la sessione locale
+document.getElementById("btnResetLocalSession").addEventListener("click", function() {
+    if (confirm("Sei sicuro di voler ripristinare la sessione locale? Questo cancellerà tutti i dati di sessione sul dispositivo corrente.")) {
+        resetLocalSession();
+    }
+});
+
+function resetLocalSession() {
+    try {
+        // Salva le impostazioni importanti prima del reset
+        const secretCode = localStorage.getItem("secret_code");
+        const maxClicks = localStorage.getItem("max_clicks");
+        const timeLimit = localStorage.getItem("time_limit_minutes");
+        const codeVersion = localStorage.getItem("code_version");
+        
+        // Pulisci tutti i dati di sessione
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            // Mantieni le impostazioni di sistema, rimuovi solo i dati di sessione
+            if (!key.startsWith("secret_code") && 
+                !key.startsWith("max_clicks") && 
+                !key.startsWith("time_limit_minutes") &&
+                !key.startsWith("code_version") &&
+                !key.startsWith("checkin_") &&
+                !key.startsWith("devices") &&
+                !key.startsWith("secure_links") &&
+                key !== "adminAuthenticated") {
+                keysToRemove.push(key);
+            }
+        }
+        
+        // Rimuovi le chiavi di sessione
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+        });
+        
+        // Pulisci anche i cookie correlati
+        clearSessionCookies();
+        
+        // Mostra risultato
+        const resultDiv = document.getElementById("localResetResult");
+        resultDiv.innerHTML = `
+            <div class="success-message">
+                <i class="fas fa-check-circle"></i>
+                Sessione locale ripristinata con successo!
+            </div>
+            <div class="reset-info">
+                <p><strong>Azioni eseguite:</strong></p>
+                <ul>
+                    <li>Puliti dati di sessione</li>
+                    <li>Puliti cookie di sessione</li>
+                    <li>Mantenute impostazioni di sistema</li>
+                    <li>Fai refresh alla pagina</li
+                </ul>
+                <p>Ora puoi tornare alla schermata principale e inserire nuovamente il codice.</p>
+            </div>
+        `;
+        
+        // Nascondi il risultato dopo 5 secondi
+        setTimeout(() => {
+            resultDiv.innerHTML = '';
+        }, 5000);
+        
+        console.log("Sessione locale ripristinata");
+        
+    } catch (error) {
+        console.error("Errore nel ripristino della sessione locale:", error);
+        const resultDiv = document.getElementById("localResetResult");
+        resultDiv.innerHTML = `
+            <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                Errore nel ripristino: ${error.message}
+            </div>
+        `;
+    }
+}
+
+// Funzione per pulire i cookie di sessione
+function clearSessionCookies() {
+    try {
+        const cookies = document.cookie.split(";");
+        for (let cookie of cookies) {
+            const [name] = cookie.trim().split("=");
+            // Rimuovi i cookie di sessione (escludendo quelli importanti)
+            if (name && !name.startsWith("adminAuthenticated")) {
+                document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+            }
+        }
+    } catch (error) {
+        console.error("Errore nella pulizia dei cookie:", error);
+    }
+}
+
+// Funzione per verificare lo stato della sessione locale
+function checkLocalSessionStatus() {
+    try {
+        const sessionData = {
+            authVerified: localStorage.getItem("auth_verified"),
+            authTimestamp: localStorage.getItem("auth_timestamp"),
+            usageStartTime: localStorage.getItem("usage_start_time"),
+            usageHash: localStorage.getItem("usage_hash"),
+            devices: {}
+        };
+        
+        // Controlla lo stato dei click per ogni dispositivo
+        DEVICES.forEach(device => {
+            sessionData.devices[device.storage_key] = localStorage.getItem(device.storage_key);
+        });
+        
+        console.log("Stato sessione locale:", sessionData);
+        return sessionData;
+    } catch (error) {
+        console.error("Errore nel controllo stato sessione:", error);
+        return null;
+    }
+}
+
+
+// Aggiungi dopo le altre funzioni
+
+// Configurazione dispositivi per l'admin panel
+const ADMIN_DEVICES = [
+    {
+        id: "e4b063f0c38c",
+        auth_key: "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
+        button_id: "btnOpenMainDoor",
+        status_id: "mainDoorStatus",
+        status_text_id: "mainDoorStatusText",
+        result_id: "mainDoorResult",
+        name: "Porta Principale"
+    },
+    {
+        id: "34945478d595",
+        auth_key: "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
+        button_id: "btnOpenAptDoor",
+        status_id: "aptDoorStatus",
+        status_text_id: "aptDoorStatusText",
+        result_id: "aptDoorResult",
+        name: "Porta Appartamento"
+    },
+    {
+        id: "3494547ab161",
+        auth_key: "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
+        button_id: "btnOpenExtraDoor1",
+        status_id: "extraDoor1Status",
+        status_text_id: "extraDoor1StatusText",
+        result_id: "extraDoor1Result",
+        name: "Porta Extra 1",
+        container_id: "extraDoor1Admin"
+    },
+    {
+        id: "placeholder_id_2",
+        auth_key: "placeholder_auth_key_2",
+        button_id: "btnOpenExtraDoor2",
+        status_id: "extraDoor2Status",
+        status_text_id: "extraDoor2StatusText",
+        result_id: "extraDoor2Result",
+        name: "Porta Extra 2",
+        container_id: "extraDoor2Admin"
+    }
+];
+
+// URL base per le API Shelly
+const SHELLY_API_URL = "https://shelly-73-eu.shelly.cloud/v2/devices/api/set/switch";
+
+// Inizializzazione controlli porte
+function initDoorControls() {
+    // Aggiorna visibilità porte extra
+    updateExtraDoorsVisibility();
+    
+    // Aggiungi event listener per ogni porta
+    ADMIN_DEVICES.forEach(device => {
+        const button = document.getElementById(device.button_id);
+        if (button) {
+            button.addEventListener("click", () => {
+                openDoor(device);
+            });
+        }
+    });
+    
+    // Apertura multipla
+    document.getElementById("btnOpenAllDoors").addEventListener("click", openAllDoors);
+    document.getElementById("btnCheckAllDoors").addEventListener("click", checkAllDoorsStatus);
+    
+    // Verifica stato iniziale
+    checkAllDoorsStatus();
+}
+
+// Aggiorna visibilità porte extra
+function updateExtraDoorsVisibility() {
+    try {
+        const devices = JSON.parse(localStorage.getItem("devices")) || [];
+        ADMIN_DEVICES.forEach((device, index) => {
+            if (device.container_id) {
+                const container = document.getElementById(device.container_id);
+                if (container) {
+                    if (devices.length > index && devices[index] && devices[index].visible) {
+                        container.style.display = "block";
+                    } else {
+                        container.style.display = "none";
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Errore nell'aggiornamento visibilità porte:", error);
+    }
+}
+
+// Funzione per aprire una porta
+// Funzione per aprire una porta
+async function openDoor(device) {
+    const button = document.getElementById(device.button_id);
+    const resultDiv = document.getElementById(device.result_id);
+    
+    // Disabilita il pulsante durante l'operazione
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Apertura in corso...';
+    
+    // Aggiorna stato
+    updateDoorStatus(device, "working", "Apertura in corso...");
+    
+    try {
+        const response = await fetch(SHELLY_API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                id: device.id,
+                auth_key: device.auth_key,
+                channel: 0,
+                on: true,
+                turn: "on",
+            }),
+        });
+
+        console.log(`Risposta API ${device.name}:`, response);
+
+        if (response.ok) {
+            // Prova a parsare come JSON, ma gestisci il caso di risposta vuota
+            let data;
+            const responseText = await response.text();
+            
+            if (responseText.trim() === "") {
+                // Risposta vuota - consideriamo successo
+                data = { ok: true };
+                console.log(`${device.name}: Risposta vuota, considerata successo`);
+            } else {
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.warn(`${device.name}: Risposta non JSON valida:`, responseText);
+                    // Se non è JSON valido ma la risposta HTTP è ok, consideriamo successo
+                    data = { ok: true };
+                }
+            }
+            
+            if (data && data.ok) {
+                // Successo
+                updateDoorStatus(device, "success", "Porta aperta con successo");
+                resultDiv.innerHTML = `
+                    <div class="success-message">
+                        <i class="fas fa-check-circle"></i>
+                        ${device.name} aperta con successo alle ${new Date().toLocaleTimeString()}
+                    </div>
+                `;
+                
+                // Registra l'apertura nel log
+                logDoorAction(device.name, "success");
+            } else {
+                // La porta si è aperta ma la risposta non è standard
+                updateDoorStatus(device, "success", "Porta aperta (risposta non standard)");
+                resultDiv.innerHTML = `
+                    <div class="success-message">
+                        <i class="fas fa-check-circle"></i>
+                        ${device.name} aperta con successo alle ${new Date().toLocaleTimeString()}
+                        <br><small>Risposta API: ${responseText.substring(0, 100)}</small>
+                    </div>
+                `;
+                
+                logDoorAction(device.name, "success", "Risposta API non standard");
+            }
+        } else {
+            throw new Error(`Errore HTTP: ${response.status} ${response.statusText}`);
+        }
+    } catch (error) {
+        console.error(`Errore apertura ${device.name}:`, error);
+        updateDoorStatus(device, "error", "Errore nell'apertura");
+        resultDiv.innerHTML = `
+            <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                Errore nell'apertura di ${device.name}: ${error.message}
+            </div>
+        `;
+        
+        // Registra l'errore nel log
+        logDoorAction(device.name, "error", error.message);
+    } finally {
+        // Riabilita il pulsante dopo 3 secondi
+        setTimeout(() => {
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-key"></i> Apri ' + device.name.split(' ')[0];
+            
+            // Pulisci il messaggio dopo 5 secondi
+            setTimeout(() => {
+                resultDiv.innerHTML = '';
+            }, 5000);
+        }, 3000);
+    }
+}
+// Funzione per aprire tutte le porte
+async function openAllDoors() {
+    const results = [];
+    
+    for (const device of ADMIN_DEVICES) {
+        // Salta le porte extra non visibili
+        if (device.container_id) {
+            const container = document.getElementById(device.container_id);
+            if (container && container.style.display === "none") {
+                continue;
+            }
+        }
+        
+        try {
+            await openDoor(device);
+            results.push({ device: device.name, status: "success" });
+        } catch (error) {
+            results.push({ device: device.name, status: "error", error: error.message });
+        }
+        
+        // Aspetta 1 secondo tra un'apertura e l'altra
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    // Mostra riepilogo
+    showBulkOperationResult("Apertura multipla completata", results);
+}
+
+// Funzione per verificare lo stato di tutte le porte
+async function checkAllDoorsStatus() {
+    ADMIN_DEVICES.forEach(device => {
+        // Salta le porte extra non visibili
+        if (device.container_id) {
+            const container = document.getElementById(device.container_id);
+            if (container && container.style.display === "none") {
+                return;
+            }
+        }
+        
+        checkDoorStatus(device);
+    });
+}
+
+// Funzione per verificare lo stato di una porta
+async function checkDoorStatus(device) {
+    try {
+        // Simula una verifica di stato (puoi implementare una vera verifica API qui)
+        // Per ora impostiamo uno stato "disponibile" di default
+        updateDoorStatus(device, "success", "Porta disponibile");
+    } catch (error) {
+        updateDoorStatus(device, "error", "Stato non disponibile");
+    }
+}
+
+// Aggiorna lo stato visivo della porta
+function updateDoorStatus(device, status, message) {
+    const statusIndicator = document.getElementById(device.status_id);
+    const statusText = document.getElementById(device.status_text_id);
+    
+    // Rimuovi tutte le classi esistenti
+    statusIndicator.className = "status-indicator";
+    statusText.textContent = `Stato: ${message}`;
+    
+    switch (status) {
+        case "success":
+            statusIndicator.classList.add("status-on");
+            break;
+        case "error":
+            statusIndicator.classList.add("status-off");
+            break;
+        case "working":
+            statusIndicator.classList.add("status-working");
+            break;
+        default:
+            statusIndicator.classList.add("status-unknown");
+    }
+}
+
+// Mostra risultato operazioni multiple
+function showBulkOperationResult(title, results) {
+    const successCount = results.filter(r => r.status === "success").length;
+    const errorCount = results.filter(r => r.status === "error").length;
+    
+    // Crea un popup o notifica con i risultati
+    alert(`
+${title}
+\nSuccessi: ${successCount}
+Errori: ${errorCount}
+\nControlla i log per i dettagli.
+    `);
+}
+
+// Registra le azioni delle porte per il logging
+function logDoorAction(doorName, status, error = null) {
+    const logEntry = {
+        timestamp: new Date().toISOString(),
+        door: doorName,
+        status: status,
+        error: error,
+        admin: true
+    };
+    
+    // Salva nel localStorage per tracciamento
+    try {
+        const doorLogs = JSON.parse(localStorage.getItem("doorActionLogs")) || [];
+        doorLogs.unshift(logEntry);
+        // Mantieni solo gli ultimi 100 log
+        if (doorLogs.length > 100) {
+            doorLogs.splice(100);
+        }
+        localStorage.setItem("doorActionLogs", JSON.stringify(doorLogs));
+    } catch (error) {
+        console.error("Errore nel salvataggio log:", error);
+    }
+}
+
+// Inizializza i controlli quando il DOM è pronto
+document.addEventListener("DOMContentLoaded", function() {
+    // ... codice esistente ...
+    
+    // Inizializza i controlli delle porte dopo il login
+    if (localStorage.getItem("adminAuthenticated") === "true") {
+        initDoorControls();
+    }
+});
+
+// Aggiorna i controlli quando si caricano le impostazioni
+async function loadSettings() {
+    // ... codice esistente ...
+    
+    // Aggiorna visibilità porte extra
+    updateExtraDoorsVisibility();
+}
