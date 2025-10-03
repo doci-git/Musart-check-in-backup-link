@@ -1,845 +1,830 @@
-// admin.js - Sistema di Amministrazione Check-in
-// Riorganizzato per migliore manutenibilità e leggibilità
+(() => {
+  "use strict";
 
-// =============================================
-// CONFIGURAZIONE E INIZIALIZZAZIONE
-// =============================================
+  // =============================================
+  // CONFIGURAZIONE E INIZIALIZZAZIONE
+  // =============================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyCuy3Sak96soCla7b5Yb5wmkdVfMqAXmok",
+    authDomain: "check-in-4e0e9.firebaseapp.com",
+    databaseURL:
+      "https://check-in-4e0e9-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "check-in-4e0e9",
+    storageBucket: "check-in-4e0e9.firebasestorage.app",
+    messagingSenderId: "723880990177",
+    appId: "1:723880990177:web:f002733b2cc2e50d172ea0",
+    measurementId: "G-H97GB9L4F5",
+  };
 
-// Configurazione Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyCuy3Sak96soCla7b5Yb5wmkdVfMqAXmok",
-  authDomain: "check-in-4e0e9.firebaseapp.com",
-  databaseURL:
-    "https://check-in-4e0e9-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "check-in-4e0e9",
-  storageBucket: "check-in-4e0e9.firebasestorage.app",
-  messagingSenderId: "723880990177",
-  appId: "1:723880990177:web:f002733b2cc2e50d172ea0",
-  measurementId: "G-H97GB9L4F5",
-};
+  // Valori di fallback (possono essere sovrascritti da settings Firebase)
+  let ADMIN_PASSWORD = "1122"; // TODO: spostare su settings/admin_password
+  const SHELLY_API_URL =
+    "https://shelly-73-eu.shelly.cloud/v2/devices/api/set/switch";
 
-// Costanti applicative
-const ADMIN_PASSWORD = "1122";
-const SHELLY_API_URL =
-  "https://shelly-73-eu.shelly.cloud/v2/devices/api/set/switch";
+  // Segreto per hash: può essere sovrascritto da settings/admin_secret
+  let ADMIN_SECRET = "admin_local_secret_strong_!@#2025";
 
-// Configurazione dispositivi Shelly
-const ADMIN_DEVICES = [
-  {
-    id: "e4b063f0c38c",
-    auth_key:
-      "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
-    button_id: "btnOpenMainDoor",
-    status_id: "mainDoorStatus",
-    status_text_id: "mainDoorStatusText",
-    result_id: "mainDoorResult",
-    name: "Porta Principale",
-  },
-  {
-    id: "34945478d595",
-    auth_key:
-      "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
-    button_id: "btnOpenAptDoor",
-    status_id: "aptDoorStatus",
-    status_text_id: "aptDoorStatusText",
-    result_id: "aptDoorResult",
-    name: "Porta Appartamento",
-  },
-  {
-    id: "3494547ab161",
-    auth_key:
-      "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
-    button_id: "btnOpenExtraDoor1",
-    status_id: "extraDoor1Status",
-    status_text_id: "extraDoor1StatusText",
-    result_id: "extraDoor1Result",
-    name: "Porta Extra 1",
-    container_id: "extraDoor1Admin",
-  },
-  {
-    id: "placeholder_id_2",
-    auth_key: "placeholder_auth_key_2",
-    button_id: "btnOpenExtraDoor2",
-    status_id: "extraDoor2Status",
-    status_text_id: "extraDoor2StatusText",
-    result_id: "extraDoor2Result",
-    name: "Porta Extra 2",
-    container_id: "extraDoor2Admin",
-  },
-];
+  // Configurazione dispositivi Shelly
+  const ADMIN_DEVICES = Object.freeze([
+    {
+      id: "e4b063f0c38c",
+      auth_key:
+        "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
+      button_id: "btnOpenMainDoor",
+      status_id: "mainDoorStatus",
+      status_text_id: "mainDoorStatusText",
+      result_id: "mainDoorResult",
+      name: "Porta Principale",
+    },
+    {
+      id: "34945478d595",
+      auth_key:
+        "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
+      button_id: "btnOpenAptDoor",
+      status_id: "aptDoorStatus",
+      status_text_id: "aptDoorStatusText",
+      result_id: "aptDoorResult",
+      name: "Porta Appartamento",
+    },
+    {
+      id: "3494547ab161",
+      auth_key:
+        "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
+      button_id: "btnOpenExtraDoor1",
+      status_id: "extraDoor1Status",
+      status_text_id: "extraDoor1StatusText",
+      result_id: "extraDoor1Result",
+      name: "Porta Extra 1",
+      container_id: "extraDoor1Admin",
+    },
+    {
+      id: "placeholder_id_2",
+      auth_key: "placeholder_auth_key_2",
+      button_id: "btnOpenExtraDoor2",
+      status_id: "extraDoor2Status",
+      status_text_id: "extraDoor2StatusText",
+      result_id: "extraDoor2Result",
+      name: "Porta Extra 2",
+      container_id: "extraDoor2Admin",
+    },
+  ]);
 
-// Inizializza Firebase
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+  // Inizializza Firebase (se non già inizializzato altrove)
+  if (!firebase.apps || firebase.apps.length === 0) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const database = firebase.database();
 
-// =============================================
-// GESTIONE AUTENTICAZIONE
-// =============================================
-
-document.addEventListener("DOMContentLoaded", function () {
-  // Verifica se l'utente è già autenticato
-  const isAuthenticated = localStorage.getItem("adminAuthenticated") === "true";
-
-  if (isAuthenticated) {
-    showAdminInterface();
-  } else {
-    showLoginModal();
+  // =============================================
+  // UTILS
+  // =============================================
+  function qs(id) {
+    return document.getElementById(id);
+  }
+  function on(id, evt, handler) {
+    const el = qs(id);
+    if (el) el.addEventListener(evt, handler);
+  }
+  function fmtDateTime(ms) {
+    try {
+      return new Date(ms).toLocaleString("it-IT");
+    } catch {
+      return "" + ms;
+    }
+  }
+  async function sha256(str) {
+    const enc = new TextEncoder().encode(str);
+    const buf = await crypto.subtle.digest("SHA-256", enc);
+    return Array.from(new Uint8Array(buf))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+  function alertOnce(msg) {
+    // wrapper semplice per eventuale futura sostituzione con toast
+    window.alert(msg);
   }
 
-  // Focus sul campo password
-  document.getElementById("adminPassword").focus();
-});
-
-function showAdminInterface() {
-  document.getElementById("loginModal").classList.add("hidden");
-  document.getElementById("adminContainer").style.display = "block";
-  loadSettings();
-  initDoorControls();
-}
-
-function showLoginModal() {
-  document.getElementById("loginModal").classList.remove("hidden");
-  document.getElementById("adminContainer").style.display = "none";
-}
-
-// Gestione del login
-document.getElementById("btnLogin").addEventListener("click", handleLogin);
-
-document
-  .getElementById("adminPassword")
-  .addEventListener("keypress", function (e) {
-    if (e.key === "Enter") {
-      handleLogin();
+  // Fetch con timeout (AbortController)
+  async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      clearTimeout(id);
     }
-  });
+  }
 
-function handleLogin() {
-  const password = document.getElementById("adminPassword").value.trim();
-  const loginError = document.getElementById("loginError");
-  const loginModal = document.getElementById("loginModal");
+  // =============================================
+  // AUTENTICAZIONE ADMIN (ibrida: flag + hash sessione)
+  // =============================================
+  function isAdminSessionValid() {
+    const flag = localStorage.getItem("adminAuthenticated") === "true";
+    const ts = sessionStorage.getItem("admin_session_ts");
+    const h = sessionStorage.getItem("admin_session_hash");
+    return flag && !!ts && !!h;
+  }
 
-  if (password === ADMIN_PASSWORD) {
+  async function establishAdminSession() {
+    const ts = Date.now().toString();
+    const hash = await sha256(ts + ADMIN_SECRET);
+    sessionStorage.setItem("admin_session_ts", ts);
+    sessionStorage.setItem("admin_session_hash", hash);
     localStorage.setItem("adminAuthenticated", "true");
-    showAdminInterface();
-  } else {
-    loginError.style.display = "block";
-    document.getElementById("adminPassword").value = "";
-    document.getElementById("adminPassword").focus();
-
-    // Effetto shake al modale
-    loginModal.classList.add("shake");
-    setTimeout(() => {
-      loginModal.classList.remove("shake");
-    }, 500);
-  }
-}
-
-// =============================================
-// GESTIONE IMPOSTAZIONI (FIREBASE + LOCALSTORAGE)
-// =============================================
-
-// Funzioni per il salvataggio e caricamento delle impostazioni
-async function saveSettingToFirebase(key, value) {
-  try {
-    await database.ref("settings/" + key).set(value);
-    console.log(`Impostazione ${key} salvata su Firebase:`, value);
-    return true;
-  } catch (error) {
-    console.error(`Errore nel salvataggio di ${key} su Firebase:`, error);
-    return false;
-  }
-}
-
-async function loadSettingsFromFirebase() {
-  try {
-    const snapshot = await database.ref("settings").once("value");
-    return snapshot.exists() ? snapshot.val() : null;
-  } catch (error) {
-    console.error(
-      "Errore nel caricamento delle impostazioni da Firebase:",
-      error
-    );
-    return null;
-  }
-}
-
-async function loadSettings() {
-  const firebaseSettings = await loadSettingsFromFirebase();
-
-  if (firebaseSettings) {
-    applySettingsFromFirebase(firebaseSettings);
-  } else {
-    applySettingsFromLocalStorage();
   }
 
-  loadCheckinTimeSettings();
-  loadExtraDoorsVisibility();
-  updateActiveLinksList();
-  updateLinkStatistics();
-}
-
-function applySettingsFromFirebase(settings) {
-  const secretCode = settings.secret_code || "2245";
-  const maxClicks = settings.max_clicks || "3";
-  const timeLimit = settings.time_limit_minutes || "50000";
-
-  // Aggiorna UI
-  document.getElementById("currentCode").value = secretCode;
-  document.getElementById("currentMaxClicks").value = maxClicks;
-  document.getElementById("currentTimeLimit").value = timeLimit;
-  document.getElementById("newMaxClicks").value = maxClicks;
-  document.getElementById("newTimeLimit").value = timeLimit;
-
-  // Aggiorna localStorage
-  localStorage.setItem("secret_code", secretCode);
-  localStorage.setItem("max_clicks", maxClicks);
-  localStorage.setItem("time_limit_minutes", timeLimit);
-}
-
-function applySettingsFromLocalStorage() {
-  const secretCode = localStorage.getItem("secret_code") || "2245";
-  const maxClicks = localStorage.getItem("max_clicks") || "3";
-  const timeLimit = localStorage.getItem("time_limit_minutes") || "50000";
-
-  // Aggiorna UI
-  document.getElementById("currentCode").value = secretCode;
-  document.getElementById("currentMaxClicks").value = maxClicks;
-  document.getElementById("currentTimeLimit").value = timeLimit;
-  document.getElementById("newMaxClicks").value = maxClicks;
-  document.getElementById("newTimeLimit").value = timeLimit;
-
-  // Salva su Firebase per futuri utilizzi
-  saveSettingToFirebase("secret_code", secretCode);
-  saveSettingToFirebase("max_clicks", maxClicks);
-  saveSettingToFirebase("time_limit_minutes", timeLimit);
-}
-
-function loadCheckinTimeSettings() {
-  const checkinStartTime =
-    localStorage.getItem("checkin_start_time") || "14:00";
-  const checkinEndTime = localStorage.getItem("checkin_end_time") || "22:00";
-
-  document.getElementById("checkinStartTime").value = checkinStartTime;
-  document.getElementById("checkinEndTime").value = checkinEndTime;
-  document.getElementById(
-    "currentCheckinTimeRange"
-  ).value = `${checkinStartTime} - ${checkinEndTime}`;
-
-  updateCheckinTimeStatus();
-}
-
-function updateCheckinTimeStatus() {
-  const checkinTimeStatusEl = document.getElementById("checkinTimeStatus");
-  const toggleButton = document.getElementById("btnToggleCheckinTime");
-  const isEnabled = localStorage.getItem("checkin_time_enabled") !== "false";
-
-  if (isEnabled) {
-    checkinTimeStatusEl.innerHTML =
-      '<span class="status-indicator status-on"></span> Attivo';
-    toggleButton.classList.add("btn-success");
-    toggleButton.innerHTML =
-      '<i class="fas fa-toggle-on"></i> Disattiva Controllo Orario';
-  } else {
-    checkinTimeStatusEl.innerHTML =
-      '<span class="status-indicator status-off"></span> Disattivato';
-    toggleButton.classList.add("btn-error");
-    toggleButton.innerHTML =
-      '<i class="fas fa-toggle-off"></i> Attiva Controllo Orario';
+  function clearAdminSession() {
+    sessionStorage.removeItem("admin_session_ts");
+    sessionStorage.removeItem("admin_session_hash");
+    localStorage.removeItem("adminAuthenticated");
   }
-}
 
-function loadExtraDoorsVisibility() {
-  try {
-    const devices = JSON.parse(localStorage.getItem("devices")) || [];
-    if (devices.length >= 4) {
-      document.getElementById("extraDoor1Visible").checked =
-        devices[2].visible || false;
-      document.getElementById("extraDoor2Visible").checked =
-        devices[3].visible || false;
+  // =============================================
+  // GESTIONE UI LOGIN/ADMIN
+  // =============================================
+  function showAdminInterface() {
+    const loginModal = qs("loginModal");
+    const adminContainer = qs("adminContainer");
+    if (loginModal) loginModal.classList.add("hidden");
+    if (adminContainer) adminContainer.style.display = "block";
+    loadSettings();
+    initDoorControls();
+  }
+
+  function showLoginModal() {
+    const loginModal = qs("loginModal");
+    const adminContainer = qs("adminContainer");
+    if (loginModal) loginModal.classList.remove("hidden");
+    if (adminContainer) adminContainer.style.display = "none";
+  }
+
+  async function handleLogin() {
+    const pwEl = qs("adminPassword");
+    const password = (pwEl?.value || "").trim();
+    const loginError = qs("loginError");
+    const loginModal = qs("loginModal");
+
+    // Consenti override da Firebase settings (admin_password)
+    try {
+      const snap = await database.ref("settings/admin_password").once("value");
+      const remotePw = snap?.val();
+      if (typeof remotePw === "string" && remotePw.length > 0) {
+        ADMIN_PASSWORD = remotePw;
+      }
+    } catch {
+      /* ignora se non raggiungibile */
     }
-  } catch (e) {
-    console.error("Errore nel caricamento delle porte extra:", e);
-  }
-}
 
-// =============================================
-// GESTIONE CODICE SEGRETO
-// =============================================
-
-document
-  .getElementById("btnCodeUpdate")
-  .addEventListener("click", updateSecretCode);
-
-async function updateSecretCode() {
-  const newCode = document.getElementById("newCode").value.trim();
-
-  if (!newCode) {
-    alert("Inserisci un codice valido");
-    return;
+    if (password === ADMIN_PASSWORD) {
+      await establishAdminSession();
+      showAdminInterface();
+    } else {
+      if (loginError) loginError.style.display = "block";
+      if (pwEl) {
+        pwEl.value = "";
+        pwEl.focus();
+      }
+      if (loginModal) {
+        loginModal.classList.add("shake");
+        setTimeout(() => loginModal.classList.remove("shake"), 500);
+      }
+    }
   }
 
-  const success = await saveSettingToFirebase("secret_code", newCode);
+  // =============================================
+  // IMPOSTAZIONI (Firebase + LocalStorage)
+  // =============================================
+  async function saveSettingToFirebase(key, value) {
+    try {
+      await database.ref("settings/" + key).set(value);
+      return true;
+    } catch (error) {
+      console.error(`Errore nel salvataggio di ${key} su Firebase:`, error);
+      return false;
+    }
+  }
 
-  if (success) {
+  async function loadSettingsFromFirebase() {
+    try {
+      const snapshot = await database.ref("settings").once("value");
+      return snapshot.exists() ? snapshot.val() : null;
+    } catch (error) {
+      console.error("Errore nel caricamento impostazioni da Firebase:", error);
+      return null;
+    }
+  }
+
+  async function loadSettings() {
+    const firebaseSettings = await loadSettingsFromFirebase();
+
+    // Override segreti se presenti
+    if (firebaseSettings) {
+      if (typeof firebaseSettings.admin_secret === "string") {
+        ADMIN_SECRET = firebaseSettings.admin_secret;
+      }
+      if (typeof firebaseSettings.admin_password === "string") {
+        ADMIN_PASSWORD = firebaseSettings.admin_password;
+      }
+      applySettingsFromFirebase(firebaseSettings);
+    } else {
+      applySettingsFromLocalStorage();
+    }
+
+    loadCheckinTimeSettings();
+    loadExtraDoorsVisibility();
+    updateActiveLinksList();
+    updateLinkStatistics();
+  }
+
+  function applySettingsFromFirebase(settings) {
+    const secretCode = settings.secret_code || "2245";
+    const maxClicks = settings.max_clicks || "3";
+    const timeLimit = settings.time_limit_minutes || "50000";
+
+    const currentCode = qs("currentCode");
+    const currentMaxClicks = qs("currentMaxClicks");
+    const currentTimeLimit = qs("currentTimeLimit");
+    const newMaxClicks = qs("newMaxClicks");
+    const newTimeLimit = qs("newTimeLimit");
+
+    if (currentCode) currentCode.value = secretCode;
+    if (currentMaxClicks) currentMaxClicks.value = maxClicks;
+    if (currentTimeLimit) currentTimeLimit.value = timeLimit;
+    if (newMaxClicks) newMaxClicks.value = maxClicks;
+    if (newTimeLimit) newTimeLimit.value = timeLimit;
+
+    localStorage.setItem("secret_code", secretCode);
+    localStorage.setItem("max_clicks", String(maxClicks));
+    localStorage.setItem("time_limit_minutes", String(timeLimit));
+  }
+
+  function applySettingsFromLocalStorage() {
+    const secretCode = localStorage.getItem("secret_code") || "2245";
+    const maxClicks = localStorage.getItem("max_clicks") || "3";
+    const timeLimit = localStorage.getItem("time_limit_minutes") || "50000";
+
+    const currentCode = qs("currentCode");
+    const currentMaxClicks = qs("currentMaxClicks");
+    const currentTimeLimit = qs("currentTimeLimit");
+    const newMaxClicks = qs("newMaxClicks");
+    const newTimeLimit = qs("newTimeLimit");
+
+    if (currentCode) currentCode.value = secretCode;
+    if (currentMaxClicks) currentMaxClicks.value = maxClicks;
+    if (currentTimeLimit) currentTimeLimit.value = timeLimit;
+    if (newMaxClicks) newMaxClicks.value = maxClicks;
+    if (newTimeLimit) newTimeLimit.value = timeLimit;
+
+    saveSettingToFirebase("secret_code", secretCode);
+    saveSettingToFirebase("max_clicks", maxClicks);
+    saveSettingToFirebase("time_limit_minutes", timeLimit);
+  }
+
+  async function updateSecretCode() {
+    const newCodeEl = qs("newCode");
+    const newCode = (newCodeEl?.value || "").trim();
+    if (!newCode) return alertOnce("Inserisci un codice valido");
+
+    const ok = await saveSettingToFirebase("secret_code", newCode);
+    if (!ok) return alertOnce("Errore nel salvataggio del nuovo codice.");
+
     localStorage.setItem("secret_code", newCode);
 
-    // Aggiorna versione codice
-    const currentVersion = parseInt(localStorage.getItem("code_version")) || 1;
+    const currentVersion = parseInt(
+      localStorage.getItem("code_version") || "1",
+      10
+    );
     const newVersion = currentVersion + 1;
-    localStorage.setItem("code_version", newVersion.toString());
+    localStorage.setItem("code_version", String(newVersion));
     await saveSettingToFirebase("code_version", newVersion);
 
-    // Aggiorna timestamp
     const timestamp = Date.now().toString();
     localStorage.setItem("last_code_update", timestamp);
     await saveSettingToFirebase("last_code_update", timestamp);
 
-    document.getElementById("currentCode").value = newCode;
-    document.getElementById("newCode").value = "";
-
-    alert(
-      "Codice aggiornato con successo! Tutti gli utenti dovranno inserire il nuovo codice."
-    );
-  } else {
-    alert("Errore nel salvataggio del nuovo codice. Riprovare.");
-  }
-}
-
-// =============================================
-// GESTIONE IMPOSTAZIONI DI SISTEMA
-// =============================================
-
-document
-  .getElementById("btnSettingsUpdate")
-  .addEventListener("click", updateSystemSettings);
-
-async function updateSystemSettings() {
-  const newMaxClicks = document.getElementById("newMaxClicks").value.trim();
-  const newTimeLimit = document.getElementById("newTimeLimit").value.trim();
-
-  if (!newMaxClicks || isNaN(newMaxClicks) || parseInt(newMaxClicks) <= 0) {
-    alert("Inserisci un numero valido per i click massimi");
-    return;
+    const currentCode = qs("currentCode");
+    if (currentCode) currentCode.value = newCode;
+    if (newCodeEl) newCodeEl.value = "";
+    alertOnce("Codice aggiornato! Gli utenti dovranno usare il nuovo codice.");
   }
 
-  if (!newTimeLimit || isNaN(newTimeLimit) || parseInt(newTimeLimit) <= 0) {
-    alert("Inserisci un numero valido per il time limit");
-    return;
-  }
+  async function updateSystemSettings() {
+    const newMaxClicks = (qs("newMaxClicks")?.value || "").trim();
+    const newTimeLimit = (qs("newTimeLimit")?.value || "").trim();
 
-  const maxClicksSuccess = await saveSettingToFirebase(
-    "max_clicks",
-    newMaxClicks
-  );
-  const timeLimitSuccess = await saveSettingToFirebase(
-    "time_limit_minutes",
-    newTimeLimit
-  );
+    const clicksNum = parseInt(newMaxClicks, 10);
+    const timeNum = parseInt(newTimeLimit, 10);
 
-  if (maxClicksSuccess && timeLimitSuccess) {
-    localStorage.setItem("max_clicks", newMaxClicks);
-    localStorage.setItem("time_limit_minutes", newTimeLimit);
-
-    document.getElementById("currentMaxClicks").value = newMaxClicks;
-    document.getElementById("currentTimeLimit").value = newTimeLimit;
-
-    alert("Impostazioni aggiornate con successo!");
-  } else {
-    alert("Errore nel salvataggio delle impostazioni. Riprovare.");
-  }
-}
-
-// =============================================
-// GESTIONE ORARIO CHECK-IN
-// =============================================
-
-document
-  .getElementById("btnUpdateCheckinTime")
-  .addEventListener("click", updateCheckinTime);
-document
-  .getElementById("btnToggleCheckinTime")
-  .addEventListener("click", toggleCheckinTime);
-
-async function updateCheckinTime() {
-  const newCheckinStartTime = document.getElementById("checkinStartTime").value;
-  const newCheckinEndTime = document.getElementById("checkinEndTime").value;
-
-  if (!newCheckinStartTime || !newCheckinEndTime) {
-    alert("Inserisci orari validi");
-    return;
-  }
-
-  // Validazione intervallo orario
-  if (!isValidTimeRange(newCheckinStartTime, newCheckinEndTime)) {
-    document.getElementById("timeRangeError").style.display = "block";
-    return;
-  }
-
-  document.getElementById("timeRangeError").style.display = "none";
-
-  const startTimeSuccess = await saveSettingToFirebase(
-    "checkin_start_time",
-    newCheckinStartTime
-  );
-  const endTimeSuccess = await saveSettingToFirebase(
-    "checkin_end_time",
-    newCheckinEndTime
-  );
-
-  if (startTimeSuccess && endTimeSuccess) {
-    localStorage.setItem("checkin_start_time", newCheckinStartTime);
-    localStorage.setItem("checkin_end_time", newCheckinEndTime);
-
-    document.getElementById(
-      "currentCheckinTimeRange"
-    ).value = `${newCheckinStartTime} - ${newCheckinEndTime}`;
-    alert("Orario di check-in aggiornato con successo!");
-  } else {
-    alert("Errore nel salvataggio dell'orario di check-in. Riprovare.");
-  }
-}
-
-function isValidTimeRange(startTime, endTime) {
-  const [startHours, startMinutes] = startTime.split(":").map(Number);
-  const [endHours, endMinutes] = endTime.split(":").map(Number);
-
-  const startTimeInMinutes = startHours * 60 + startMinutes;
-  const endTimeInMinutes = endHours * 60 + endMinutes;
-
-  return endTimeInMinutes > startTimeInMinutes;
-}
-
-async function toggleCheckinTime() {
-  const currentStatus = localStorage.getItem("checkin_time_enabled");
-  const newStatus = currentStatus === null ? false : currentStatus !== "true";
-
-  const success = await saveSettingToFirebase(
-    "checkin_time_enabled",
-    newStatus.toString()
-  );
-
-  if (success) {
-    localStorage.setItem("checkin_time_enabled", newStatus.toString());
-    updateCheckinTimeStatus();
-    alert(
-      `Controllo orario ${newStatus ? "attivato" : "disattivato"} con successo!`
-    );
-  } else {
-    alert("Errore nel salvataggio delle impostazioni. Riprovare.");
-  }
-}
-
-// =============================================
-// GESTIONE PORTE EXTRA
-// =============================================
-
-document
-  .getElementById("btnExtraDoorsVisibility")
-  .addEventListener("click", updateExtraDoorsVisibilitySettings);
-
-function updateExtraDoorsVisibilitySettings() {
-  try {
-    let devices = JSON.parse(localStorage.getItem("devices")) || [];
-
-    if (devices.length === 0) {
-      devices = [
-        { button_id: "MainDoor", visible: true },
-        { button_id: "AptDoor", visible: true },
-        {
-          button_id: "ExtraDoor1",
-          visible: document.getElementById("extraDoor1Visible").checked,
-        },
-        {
-          button_id: "ExtraDoor2",
-          visible: document.getElementById("extraDoor2Visible").checked,
-        },
-      ];
-    } else {
-      if (devices.length > 2)
-        devices[2].visible =
-          document.getElementById("extraDoor1Visible").checked;
-      if (devices.length > 3)
-        devices[3].visible =
-          document.getElementById("extraDoor2Visible").checked;
+    if (!Number.isFinite(clicksNum) || clicksNum <= 0) {
+      return alertOnce("Inserisci un numero valido per i click massimi");
+    }
+    if (!Number.isFinite(timeNum) || timeNum <= 0) {
+      return alertOnce("Inserisci un numero valido per il time limit");
     }
 
-    localStorage.setItem("devices", JSON.stringify(devices));
-    updateExtraDoorsVisibility();
-    alert("Visibilità porte extra aggiornata con successo!");
-  } catch (e) {
-    console.error("Errore nel salvataggio delle porte extra:", e);
-    alert("Si è verificato un errore durante il salvataggio.");
-  }
-}
+    const ok1 = await saveSettingToFirebase("max_clicks", clicksNum);
+    const ok2 = await saveSettingToFirebase("time_limit_minutes", timeNum);
 
-// =============================================
-// GESTIONE LINK SICURI
-// =============================================
-
-document
-  .getElementById("btnGenerateSecureLink")
-  .addEventListener("click", generateSecureLink);
-document
-  .getElementById("btnCopySecureLink")
-  .addEventListener("click", copyGeneratedLink);
-
-function generateSecureLink() {
-  const expirationHours = parseInt(
-    document.getElementById("linkExpiration").value
-  );
-  const maxUsage = parseInt(document.getElementById("linkUsage").value);
-  const customCode = document.getElementById("linkCustomCode").value.trim();
-
-  const linkId = generateUniqueId();
-  const expirationTime = Date.now() + expirationHours * 60 * 60 * 1000;
-  const baseUrl = window.location.origin + window.location.pathname;
-  const indexUrl = baseUrl.replace("admin.html", "index.html");
-  const secureLink = `${indexUrl}?token=${linkId}`;
-
-  document.getElementById("generatedSecureLink").value = secureLink;
-  saveSecureLink(linkId, expirationTime, maxUsage, expirationHours, customCode);
-}
-
-function generateUniqueId() {
-  return "link_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-}
-
-function saveSecureLink(
-  linkId,
-  expirationTime,
-  maxUsage,
-  expirationHours,
-  customCode = null
-) {
-  const linkData = {
-    id: linkId,
-    created: Date.now(),
-    expiration: expirationTime,
-    maxUsage: maxUsage,
-    usedCount: 0,
-    expirationHours: expirationHours,
-    status: "active",
-    customCode: customCode || null,
-  };
-
-  database
-    .ref("secure_links/" + linkId)
-    .set(linkData)
-    .then(() => {
-      console.log("Link salvato su Firebase con successo");
-      updateActiveLinksList();
-      updateLinkStatistics();
-      document.getElementById("linkCustomCode").value = "";
-    })
-    .catch((error) => {
-      console.error("Errore nel salvataggio del link:", error);
-      // Fallback al localStorage
-      const secureLinks = JSON.parse(
-        localStorage.getItem("secure_links") || "{}"
-      );
-      secureLinks[linkId] = linkData;
-      localStorage.setItem("secure_links", JSON.stringify(secureLinks));
-      updateActiveLinksList();
-      updateLinkStatistics();
-    });
-}
-
-function copyGeneratedLink() {
-  const linkInput = document.getElementById("generatedSecureLink");
-
-  if (!linkInput.value) {
-    alert("Genera prima un link");
-    return;
+    if (ok1 && ok2) {
+      localStorage.setItem("max_clicks", String(clicksNum));
+      localStorage.setItem("time_limit_minutes", String(timeNum));
+      const currentMaxClicks = qs("currentMaxClicks");
+      const currentTimeLimit = qs("currentTimeLimit");
+      if (currentMaxClicks) currentMaxClicks.value = String(clicksNum);
+      if (currentTimeLimit) currentTimeLimit.value = String(timeNum);
+      alertOnce("Impostazioni aggiornate!");
+    } else {
+      alertOnce("Errore nel salvataggio impostazioni.");
+    }
   }
 
-  linkInput.select();
-  document.execCommand("copy");
+  // =============================================
+  // ORARIO CHECK‑IN
+  // =============================================
+  function loadCheckinTimeSettings() {
+    database.ref("settings").on("value", (snap) => {
+      const s = snap.val() || {};
+      const start = s.checkin_start_time || "14:00";
+      const end = s.checkin_end_time || "22:00";
+      const enabled = String(s.checkin_time_enabled) !== "false";
 
-  // Feedback visivo
-  const btn = document.getElementById("btnCopySecureLink");
-  const originalText = btn.innerHTML;
-  btn.innerHTML = '<i class="fas fa-check"></i> Copiato!';
-  btn.style.background = "var(--success)";
+      const startEl = qs("checkinStartTime");
+      const endEl = qs("checkinEndTime");
+      const currentRangeEl = qs("currentCheckinTimeRange");
+      const statusEl = qs("checkinTimeStatus");
+      const toggleBtn = qs("btnToggleCheckinTime");
 
-  setTimeout(() => {
-    btn.innerHTML = originalText;
-    btn.style.background = "";
-  }, 2000);
-}
+      if (startEl) startEl.value = start;
+      if (endEl) endEl.value = end;
+      if (currentRangeEl) currentRangeEl.value = `${start} - ${end}`;
 
-function updateActiveLinksList() {
-  const container = document.getElementById("activeLinksList");
-  container.innerHTML =
-    '<p style="color: #666; text-align: center;">Caricamento...</p>';
-
-  database
-    .ref("secure_links")
-    .orderByChild("created")
-    .once("value")
-    .then((snapshot) => {
-      const activeLinks = [];
-      snapshot.forEach((childSnapshot) => {
-        const link = childSnapshot.val();
-        if (link.status === "active" && link.expiration > Date.now()) {
-          activeLinks.push(link);
+      if (statusEl && toggleBtn) {
+        if (enabled) {
+          statusEl.innerHTML =
+            '<span class="status-indicator status-on"></span> Attivo';
+          toggleBtn.classList.remove("btn-error");
+          toggleBtn.classList.add("btn-success");
+          toggleBtn.innerHTML =
+            '<i class="fas fa-toggle-on"></i> Disattiva Controllo Orario';
+        } else {
+          statusEl.innerHTML =
+            '<span class="status-indicator status-off"></span> Disattivato';
+          toggleBtn.classList.remove("btn-success");
+          toggleBtn.classList.add("btn-error");
+          toggleBtn.innerHTML =
+            '<i class="fas fa-toggle-off"></i> Attiva Controllo Orario';
         }
-      });
-
-      renderActiveLinks(container, activeLinks);
-    })
-    .catch((error) => {
-      console.error("Errore nel recupero dei link:", error);
-      // Fallback al localStorage
-      const secureLinks = JSON.parse(
-        localStorage.getItem("secure_links") || "{}"
-      );
-      const activeLinks = Object.values(secureLinks).filter(
-        (link) => link.status === "active" && link.expiration > Date.now()
-      );
-      renderActiveLinks(container, activeLinks);
+      }
     });
-}
-
-function renderActiveLinks(container, activeLinks) {
-  if (activeLinks.length === 0) {
-    container.innerHTML =
-      '<p style="color: #666; text-align: center;">Nessun link attivo</p>';
-    return;
   }
 
-  container.innerHTML = "";
-  activeLinks
-    .sort((a, b) => b.created - a.created)
-    .forEach((link) => {
-      const linkElement = createLinkElement(link);
-      container.appendChild(linkElement);
-    });
-}
-
-function createLinkElement(link) {
-  const linkElement = document.createElement("div");
-  linkElement.style.cssText = `
-    padding: 10px;
-    margin: 8px 0;
-    background: #f8f9fa;
-    border-radius: 6px;
-    border-left: 4px solid var(--success);
-  `;
-
-  const expiresIn = Math.max(
-    0,
-    Math.floor((link.expiration - Date.now()) / (1000 * 60 * 60))
-  );
-  const usageText = `${link.usedCount}/${link.maxUsage} utilizzi`;
-
-  let linkContent = `
-    <div style="font-size: 11px; color: #666;">
-      Creato: ${new Date(link.created).toLocaleString("it-IT")}
-    </div>
-    <div style="font-weight: bold; margin: 3px 0; color: var(--dark);">
-      Scade in: ${expiresIn}h • ${usageText}
-    </div>
-    <div style="font-size: 12px; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px;">
-      <a href="${
-        window.location.origin +
-        window.location.pathname.replace("admin.html", "index.html")
-      }?token=${link.id}" 
-         target="_blank" style="color: var(--primary);">
-         ${link.id}
-      </a>
-    </div>
-    <div style="display: flex; gap: 5px;">
-      <button onclick="copySecureLink('${link.id}')" style="
-          background: var(--primary);
-          color: white;
-          border: none;
-          padding: 4px 8px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 11px;
-      ">
-          <i class="fas fa-copy"></i> Copia
-      </button>
-      <button onclick="revokeSecureLink('${link.id}')" style="
-          background: var(--error);
-          color: white;
-          border: none;
-          padding: 4px 8px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 11px;
-      ">
-          <i class="fas fa-ban"></i> Revoca
-      </button>
-    </div>
-  `;
-
-  if (link.customCode) {
-    linkContent += `<div style="font-size: 11px; color: var(--primary); margin-top: 5px;">
-      <i class="fas fa-key"></i> Codice dedicato: ${link.customCode}
-    </div>`;
+  function isValidTimeRange(startTime, endTime) {
+    const [sh, sm] = startTime.split(":").map(Number);
+    const [eh, em] = endTime.split(":").map(Number);
+    return eh * 60 + em > sh * 60 + sm;
   }
 
-  linkElement.innerHTML = linkContent;
-  return linkElement;
-}
+  async function updateCheckinTime() {
+    const start = qs("checkinStartTime")?.value;
+    const end = qs("checkinEndTime")?.value;
 
-function copySecureLink(linkId) {
-  const baseUrl = window.location.origin + window.location.pathname;
-  const indexUrl = baseUrl.replace("admin.html", "index.html");
-  const secureLink = `${indexUrl}?token=${linkId}`;
+    if (!start || !end) {
+      alertOnce("Inserisci orari validi");
+      return;
+    }
+    if (!isValidTimeRange(start, end)) {
+      const errEl = qs("timeRangeError");
+      if (errEl) errEl.style.display = "block";
+      return;
+    }
+    const errEl = qs("timeRangeError");
+    if (errEl) errEl.style.display = "none";
 
-  const tempInput = document.createElement("input");
-  tempInput.value = secureLink;
-  document.body.appendChild(tempInput);
-  tempInput.select();
-  document.execCommand("copy");
-  document.body.removeChild(tempInput);
+    const s1 = await saveSettingToFirebase("checkin_start_time", start);
+    const s2 = await saveSettingToFirebase("checkin_end_time", end);
+    if (s1 && s2) {
+      alertOnce("Orario di check-in aggiornato con successo!");
+    } else {
+      alertOnce("Errore nel salvataggio dell'orario di check-in. Riprovare.");
+    }
+  }
 
-  alert("Link copiato negli appunti!");
-}
+  async function toggleCheckinTime() {
+    const snap = await database
+      .ref("settings/checkin_time_enabled")
+      .once("value");
+    const current = String(snap.val()) !== "false";
+    const newStatus = !current;
 
-function revokeSecureLink(linkId) {
-  database
-    .ref("secure_links/" + linkId)
-    .update({
-      status: "revoked",
-      expiration: Date.now(),
-    })
-    .then(() => {
-      updateActiveLinksList();
-      updateLinkStatistics();
-      alert("Link revocato con successo!");
-    })
-    .catch((error) => {
-      console.error("Errore nella revoca del link su Firebase:", error);
-      // Fallback al localStorage
-      const secureLinks = JSON.parse(
-        localStorage.getItem("secure_links") || "{}"
+    const ok = await saveSettingToFirebase(
+      "checkin_time_enabled",
+      String(newStatus)
+    );
+    if (ok) {
+      alertOnce(
+        `Controllo orario ${
+          newStatus ? "attivato" : "disattivato"
+        } con successo!`
       );
-      if (secureLinks[linkId]) {
-        secureLinks[linkId].status = "revoked";
-        secureLinks[linkId].expiration = Date.now();
+    } else {
+      alertOnce("Errore nel salvataggio delle impostazioni. Riprovare.");
+    }
+  }
+
+  // =============================================
+  // PORTE EXTRA (visibilità)
+  // =============================================
+  function loadExtraDoorsVisibility() {
+    try {
+      const devices = JSON.parse(localStorage.getItem("devices") || "[]");
+      if (devices.length >= 4) {
+        const d2 = qs("extraDoor1Visible");
+        const d3 = qs("extraDoor2Visible");
+        if (d2) d2.checked = !!devices[2].visible;
+        if (d3) d3.checked = !!devices[3].visible;
+      }
+    } catch (e) {
+      console.error("Errore nel caricamento delle porte extra:", e);
+    }
+  }
+
+  function updateExtraDoorsVisibilitySettings() {
+    try {
+      let devices = JSON.parse(localStorage.getItem("devices") || "[]");
+      const v2 = !!qs("extraDoor1Visible")?.checked;
+      const v3 = !!qs("extraDoor2Visible")?.checked;
+
+      if (devices.length === 0) {
+        devices = [
+          { button_id: "MainDoor", visible: true },
+          { button_id: "AptDoor", visible: true },
+          { button_id: "ExtraDoor1", visible: v2 },
+          { button_id: "ExtraDoor2", visible: v3 },
+        ];
+      } else {
+        if (devices.length > 2) devices[2].visible = v2;
+        if (devices.length > 3) devices[3].visible = v3;
+      }
+
+      localStorage.setItem("devices", JSON.stringify(devices));
+      updateExtraDoorsVisibility();
+      alertOnce("Visibilità porte extra aggiornata!");
+    } catch (e) {
+      console.error("Errore nel salvataggio delle porte extra:", e);
+      alertOnce("Si è verificato un errore durante il salvataggio.");
+    }
+  }
+
+  // =============================================
+  // LINK SICURI (Firebase + LS) + HASH TOKEN
+  // =============================================
+  function generateUniqueId() {
+    return "link_" + Date.now() + "_" + Math.random().toString(36).slice(2, 11);
+  }
+
+  async function generateSecureLink() {
+    const expirationHours = parseInt(qs("linkExpiration")?.value || "0", 10);
+    const maxUsage = parseInt(qs("linkUsage")?.value || "0", 10);
+    const customCode = (qs("linkCustomCode")?.value || "").trim();
+
+    if (!Number.isFinite(expirationHours) || expirationHours <= 0) {
+      return alertOnce("Ore di scadenza non valide");
+    }
+    if (!Number.isFinite(maxUsage) || maxUsage <= 0) {
+      return alertOnce("Numero utilizzi non valido");
+    }
+
+    const linkId = generateUniqueId();
+    const expirationTime = Date.now() + expirationHours * 60 * 60 * 1000;
+    const baseUrl = window.location.origin + window.location.pathname;
+    const indexUrl = baseUrl.replace("admin.html", "index.html");
+    const secureLink = `${indexUrl}?token=${linkId}`;
+    const out = qs("generatedSecureLink");
+    if (out) out.value = secureLink;
+
+    // hash del token per integrità lato client (nota: segreto lato client non è realmente sicuro)
+    const tokenHash = await sha256(linkId + ADMIN_SECRET);
+
+    saveSecureLink(
+      linkId,
+      expirationTime,
+      maxUsage,
+      expirationHours,
+      customCode,
+      tokenHash
+    );
+  }
+
+  function saveSecureLink(
+    linkId,
+    expirationTime,
+    maxUsage,
+    expirationHours,
+    customCode = null,
+    tokenHash = null
+  ) {
+    const linkData = {
+      id: linkId,
+      created: Date.now(),
+      expiration: expirationTime,
+      maxUsage: Number(maxUsage),
+      usedCount: 0,
+      expirationHours: Number(expirationHours),
+      status: "active",
+      customCode: customCode || null,
+      hash: tokenHash || null,
+    };
+
+    database
+      .ref("secure_links/" + linkId)
+      .set(linkData)
+      .then(() => {
+        updateActiveLinksList();
+        updateLinkStatistics();
+        const cc = qs("linkCustomCode");
+        if (cc) cc.value = "";
+      })
+      .catch((error) => {
+        console.error("Errore salvataggio link su Firebase:", error);
+        const secureLinks = JSON.parse(
+          localStorage.getItem("secure_links") || "{}"
+        );
+        secureLinks[linkId] = linkData;
         localStorage.setItem("secure_links", JSON.stringify(secureLinks));
         updateActiveLinksList();
         updateLinkStatistics();
-        alert("Link revocato con successo!");
-      }
-    });
-}
-
-function updateLinkStatistics() {
-  database
-    .ref("secure_links")
-    .once("value")
-    .then((snapshot) => {
-      const links = [];
-      snapshot.forEach((childSnapshot) => {
-        links.push(childSnapshot.val());
       });
-
-      updateStatisticsUI(links);
-    })
-    .catch((error) => {
-      console.error("Errore nel recupero delle statistiche:", error);
-      // Fallback al localStorage
-      const secureLinks = JSON.parse(
-        localStorage.getItem("secure_links") || "{}"
-      );
-      updateStatisticsUI(Object.values(secureLinks));
-    });
-}
-
-function updateStatisticsUI(links) {
-  document.getElementById("totalLinks").textContent = links.length;
-  document.getElementById("activeLinks").textContent = links.filter(
-    (l) => l.status === "active" && l.expiration > Date.now()
-  ).length;
-  document.getElementById("usedLinks").textContent = links.filter(
-    (l) => l.status === "used"
-  ).length;
-  document.getElementById("expiredLinks").textContent = links.filter(
-    (l) => l.status === "expired" || l.status === "revoked"
-  ).length;
-}
-
-// =============================================
-// GESTIONE CONTROLLO PORTE (SHELLY)
-// =============================================
-
-function initDoorControls() {
-  updateExtraDoorsVisibility();
-
-  ADMIN_DEVICES.forEach((device) => {
-    const button = document.getElementById(device.button_id);
-    if (button) {
-      button.addEventListener("click", () => openDoor(device));
-    }
-  });
-
-  document
-    .getElementById("btnOpenAllDoors")
-    .addEventListener("click", openAllDoors);
-  document
-    .getElementById("btnCheckAllDoors")
-    .addEventListener("click", checkAllDoorsStatus);
-
-  checkAllDoorsStatus();
-}
-
-function updateExtraDoorsVisibility() {
-  try {
-    const devices = JSON.parse(localStorage.getItem("devices")) || [];
-    ADMIN_DEVICES.forEach((device, index) => {
-      if (device.container_id) {
-        const container = document.getElementById(device.container_id);
-        if (container) {
-          container.style.display =
-            devices.length > index && devices[index] && devices[index].visible
-              ? "block"
-              : "none";
-        }
-      }
-    });
-  } catch (error) {
-    console.error("Errore nell'aggiornamento visibilità porte:", error);
   }
-}
 
-async function openDoor(device) {
-  const button = document.getElementById(device.button_id);
-  const resultDiv = document.getElementById(device.result_id);
+  function copyGeneratedLink() {
+    const input = qs("generatedSecureLink");
+    if (!input || !input.value) return alertOnce("Genera prima un link");
+    input.select();
+    document.execCommand("copy");
 
-  button.disabled = true;
-  button.innerHTML =
-    '<i class="fas fa-spinner fa-spin"></i> Apertura in corso...';
-  updateDoorStatus(device, "working", "Apertura in corso...");
+    const btn = qs("btnCopySecureLink");
+    if (!btn) return;
+    const original = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i> Copiato!';
+    btn.style.background = "var(--success)";
+    setTimeout(() => {
+      btn.innerHTML = original;
+      btn.style.background = "";
+    }, 2000);
+  }
 
-  try {
-    const response = await fetch(SHELLY_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: device.id,
-        auth_key: device.auth_key,
-        channel: 0,
-        on: true,
-        turn: "on",
-      }),
+  function updateActiveLinksList() {
+    const container = qs("activeLinksList");
+    if (container) {
+      container.innerHTML =
+        '<p style="color:#666;text-align:center;">Caricamento...</p>';
+    }
+
+    database
+      .ref("secure_links")
+      .orderByChild("created")
+      .once("value")
+      .then((snapshot) => {
+        const active = [];
+        snapshot.forEach((child) => {
+          const link = child.val();
+          if (link.status === "active" && link.expiration > Date.now())
+            active.push(link);
+        });
+        renderActiveLinks(container, active);
+      })
+      .catch((error) => {
+        console.error("Errore nel recupero dei link:", error);
+        const secureLinks = JSON.parse(
+          localStorage.getItem("secure_links") || "{}"
+        );
+        const active = Object.values(secureLinks).filter(
+          (l) => l.status === "active" && l.expiration > Date.now()
+        );
+        renderActiveLinks(container, active);
+      });
+  }
+
+  function renderActiveLinks(container, activeLinks) {
+    if (!container) return;
+    if (!Array.isArray(activeLinks) || activeLinks.length === 0) {
+      container.innerHTML =
+        '<p style="color:#666;text-align:center;">Nessun link attivo</p>';
+      return;
+    }
+    container.innerHTML = "";
+    activeLinks
+      .slice()
+      .sort((a, b) => b.created - a.created)
+      .forEach((l) => container.appendChild(createLinkElement(l)));
+  }
+
+  function createLinkElement(link) {
+    const el = document.createElement("div");
+    el.style.cssText = `
+      padding: 10px; margin: 8px 0; background: #f8f9fa;
+      border-radius: 6px; border-left: 4px solid var(--success);
+    `;
+
+    const expiresInH = Math.max(
+      0,
+      Math.floor((link.expiration - Date.now()) / (1000 * 60 * 60))
+    );
+    const usageText = `${link.usedCount}/${link.maxUsage} utilizzi`;
+    const linkUrl =
+      window.location.origin +
+      window.location.pathname.replace("admin.html", "index.html") +
+      `?token=${link.id}`;
+
+    let html = `
+      <div style="font-size:11px;color:#666">Creato: ${fmtDateTime(
+        link.created
+      )}</div>
+      <div style="font-weight:bold;margin:3px 0;color:var(--dark)">Scade in: ${expiresInH}h • ${usageText}</div>
+      <div style="font-size:12px;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px;">
+        <a href="${linkUrl}" target="_blank" style="color:var(--primary)">${
+      link.id
+    }</a>
+      </div>
+      <div style="display:flex;gap:5px;">
+        <button onclick="copySecureLink('${
+          link.id
+        }')" style="background:var(--primary);color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px">
+          <i class="fas fa-copy"></i> Copia
+        </button>
+        <button onclick="revokeSecureLink('${
+          link.id
+        }')" style="background:var(--error);color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px">
+          <i class="fas fa-ban"></i> Revoca
+        </button>
+      </div>
+    `;
+
+    if (link.customCode) {
+      html += `<div style="font-size:11px;color:var(--primary);margin-top:5px">
+        <i class="fas fa-key"></i> Codice dedicato: ${link.customCode}
+      </div>`;
+    }
+    if (link.hash) {
+      html += `<div style="font-size:10px;color:#888;margin-top:4px">
+        <i class="fas fa-fingerprint"></i> Hash: ${String(link.hash).slice(
+          0,
+          16
+        )}…
+      </div>`;
+    }
+
+    el.innerHTML = html;
+    return el;
+  }
+
+  function copySecureLink(id) {
+    const baseUrl = window.location.origin + window.location.pathname;
+    const indexUrl = baseUrl.replace("admin.html", "index.html");
+    const link = `${indexUrl}?token=${id}`;
+    const input = document.createElement("input");
+    input.value = link;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand("copy");
+    document.body.removeChild(input);
+    alertOnce("Link copiato negli appunti!");
+  }
+
+  function revokeSecureLink(id) {
+    database
+      .ref("secure_links/" + id)
+      .update({ status: "revoked", expiration: Date.now() })
+      .then(() => {
+        updateActiveLinksList();
+        updateLinkStatistics();
+        alertOnce("Link revocato!");
+      })
+      .catch((error) => {
+        console.error("Errore revoca su Firebase:", error);
+        const secureLinks = JSON.parse(
+          localStorage.getItem("secure_links") || "{}"
+        );
+        if (secureLinks[id]) {
+          secureLinks[id].status = "revoked";
+          secureLinks[id].expiration = Date.now();
+          localStorage.setItem("secure_links", JSON.stringify(secureLinks));
+          updateActiveLinksList();
+          updateLinkStatistics();
+          alertOnce("Link revocato (locale)!");
+        }
+      });
+  }
+
+  function updateLinkStatistics() {
+    database
+      .ref("secure_links")
+      .once("value")
+      .then((snapshot) => {
+        const links = [];
+        snapshot.forEach((c) => links.push(c.val()));
+        updateStatisticsUI(links);
+      })
+      .catch((error) => {
+        console.error("Errore statistiche:", error);
+        const secureLinks = JSON.parse(
+          localStorage.getItem("secure_links") || "{}"
+        );
+        updateStatisticsUI(Object.values(secureLinks));
+      });
+  }
+
+  function updateStatisticsUI(links) {
+    const now = Date.now();
+    const total = links.length;
+    const active = links.filter(
+      (l) => l.status === "active" && l.expiration > now
+    ).length;
+    const used = links.filter((l) => l.status === "used").length;
+    const expired = links.filter(
+      (l) => l.status === "expired" || l.status === "revoked"
+    ).length;
+
+    const totalEl = qs("totalLinks");
+    const activeEl = qs("activeLinks");
+    const usedEl = qs("usedLinks");
+    const expiredEl = qs("expiredLinks");
+
+    if (totalEl) totalEl.textContent = String(total);
+    if (activeEl) activeEl.textContent = String(active);
+    if (usedEl) usedEl.textContent = String(used);
+    if (expiredEl) expiredEl.textContent = String(expired);
+  }
+
+  // =============================================
+  // CONTROLLO PORTE (SHELLY)
+  // =============================================
+  function updateExtraDoorsVisibility() {
+    try {
+      const devices = JSON.parse(localStorage.getItem("devices") || "[]");
+      ADMIN_DEVICES.forEach((device, index) => {
+        if (!device.container_id) return;
+        const container = qs(device.container_id);
+        if (!container) return;
+        const visible =
+          devices.length > index && devices[index] && devices[index].visible;
+        container.style.display = visible ? "block" : "none";
+      });
+    } catch (e) {
+      console.error("Errore visibilità porte extra:", e);
+    }
+  }
+
+  function initDoorControls() {
+    updateExtraDoorsVisibility();
+
+    ADMIN_DEVICES.forEach((device) => {
+      const button = qs(device.button_id);
+      if (button) button.addEventListener("click", () => openDoor(device));
     });
 
-    if (response.ok) {
-      const responseText = await response.text();
-      let data = { ok: true }; // Default a successo
+    on("btnOpenAllDoors", "click", openAllDoors);
+    on("btnCheckAllDoors", "click", checkAllDoorsStatus);
 
-      if (responseText.trim() !== "") {
+    checkAllDoorsStatus();
+  }
+
+  async function openDoor(device) {
+    const button = qs(device.button_id);
+    const resultDiv = qs(device.result_id);
+
+    if (button) {
+      button.disabled = true;
+      button.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> Apertura in corso...';
+    }
+    updateDoorStatus(device, "working", "Apertura in corso...");
+
+    try {
+      const resp = await fetchWithTimeout(
+        SHELLY_API_URL,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: device.id,
+            auth_key: device.auth_key,
+            channel: 0,
+            on: true,
+            turn: "on",
+          }),
+        },
+        12000
+      );
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
+      const text = await resp.text();
+      let data = { ok: true };
+      if (text.trim() !== "") {
         try {
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          console.warn(
-            `${device.name}: Risposta non JSON valida:`,
-            responseText
-          );
+          data = JSON.parse(text);
+        } catch {
+          /* risposta non JSON */
         }
       }
 
@@ -850,255 +835,363 @@ async function openDoor(device) {
           device,
           resultDiv,
           "Porta aperta (risposta non standard)",
-          responseText
+          text
         );
       }
-    } else {
-      throw new Error(`Errore HTTP: ${response.status} ${response.statusText}`);
-    }
-  } catch (error) {
-    handleDoorError(device, resultDiv, error);
-  } finally {
-    resetDoorButton(button, device);
-  }
-}
-
-function handleDoorSuccess(device, resultDiv, message, responseText = "") {
-  updateDoorStatus(device, "success", message);
-  resultDiv.innerHTML = `
-    <div class="success-message">
-      <i class="fas fa-check-circle"></i>
-      ${device.name} aperta con successo alle ${new Date().toLocaleTimeString()}
-      ${
-        responseText
-          ? `<br><small>Risposta API: ${responseText.substring(0, 100)}</small>`
-          : ""
-      }
-    </div>
-  `;
-  logDoorAction(device.name, "success", responseText || message);
-}
-
-function handleDoorError(device, resultDiv, error) {
-  console.error(`Errore apertura ${device.name}:`, error);
-  updateDoorStatus(device, "error", "Errore nell'apertura");
-  resultDiv.innerHTML = `
-    <div class="error-message">
-      <i class="fas fa-exclamation-circle"></i>
-      Errore nell'apertura di ${device.name}: ${error.message}
-    </div>
-  `;
-  logDoorAction(device.name, "error", error.message);
-}
-
-function resetDoorButton(button, device) {
-  setTimeout(() => {
-    button.disabled = false;
-    button.innerHTML =
-      '<i class="fas fa-key"></i> Apri ' + device.name.split(" ")[0];
-
-    setTimeout(() => {
-      document.getElementById(device.result_id).innerHTML = "";
-    }, 5000);
-  }, 3000);
-}
-
-async function openAllDoors() {
-  const results = [];
-
-  for (const device of ADMIN_DEVICES) {
-    if (device.container_id) {
-      const container = document.getElementById(device.container_id);
-      if (container && container.style.display === "none") continue;
-    }
-
-    try {
-      await openDoor(device);
-      results.push({ device: device.name, status: "success" });
     } catch (error) {
-      results.push({
-        device: device.name,
-        status: "error",
-        error: error.message,
+      handleDoorError(device, resultDiv, error);
+    } finally {
+      resetDoorButton(button, device);
+    }
+  }
+
+  function handleDoorSuccess(device, resultDiv, message, responseText = "") {
+    updateDoorStatus(device, "success", message);
+    if (resultDiv) {
+      resultDiv.innerHTML = `
+        <div class="success-message">
+          <i class="fas fa-check-circle"></i>
+          ${device.name} aperta alle ${new Date().toLocaleTimeString()}
+          ${
+            responseText
+              ? `<br><small>API: ${responseText.substring(0, 100)}</small>`
+              : ""
+          }
+        </div>
+      `;
+    }
+    logDoorAction(device.name, "success", responseText || message);
+  }
+
+  function handleDoorError(device, resultDiv, error) {
+    updateDoorStatus(device, "error", "Errore nell'apertura");
+    if (resultDiv) {
+      resultDiv.innerHTML = `
+        <div class="error-message">
+          <i class="fas fa-exclamation-circle"></i>
+          Errore apertura ${device.name}: ${error.message}
+        </div>
+      `;
+    }
+    logDoorAction(device.name, "error", error.message);
+  }
+
+  function resetDoorButton(button, device) {
+    setTimeout(() => {
+      if (button) {
+        button.disabled = false;
+        button.innerHTML =
+          '<i class="fas fa-key"></i> Apri ' + device.name.split(" ")[0];
+      }
+      setTimeout(() => {
+        const res = qs(device.result_id);
+        if (res) res.innerHTML = "";
+      }, 5000);
+    }, 3000);
+  }
+
+  async function openAllDoors() {
+    const results = [];
+    for (const device of ADMIN_DEVICES) {
+      if (device.container_id) {
+        const c = qs(device.container_id);
+        if (c && c.style.display === "none") continue;
+      }
+      try {
+        await openDoor(device);
+        results.push({ device: device.name, status: "success" });
+      } catch (e) {
+        results.push({
+          device: device.name,
+          status: "error",
+          error: e.message,
+        });
+      }
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    showBulkOperationResult("Apertura multipla completata", results);
+  }
+
+  function checkAllDoorsStatus() {
+    ADMIN_DEVICES.forEach((device) => {
+      if (device.container_id) {
+        const c = qs(device.container_id);
+        if (c && c.style.display === "none") return;
+      }
+      checkDoorStatus(device);
+    });
+  }
+
+  function checkDoorStatus(device) {
+    // eventuale interrogazione reale dello stato (non implementata)
+    updateDoorStatus(device, "success", "Porta disponibile");
+  }
+
+  function updateDoorStatus(device, status, message) {
+    const indicator = qs(device.status_id);
+    const text = qs(device.status_text_id);
+    if (indicator) indicator.className = "status-indicator";
+    if (text) text.textContent = `Stato: ${message}`;
+    if (indicator) {
+      switch (status) {
+        case "success":
+          indicator.classList.add("status-on");
+          break;
+        case "error":
+          indicator.classList.add("status-off");
+          break;
+        case "working":
+          indicator.classList.add("status-working");
+          break;
+        default:
+          indicator.classList.add("status-unknown");
+      }
+    }
+  }
+
+  function showBulkOperationResult(title, results) {
+    const ok = results.filter((r) => r.status === "success").length;
+    const ko = results.filter((r) => r.status === "error").length;
+    alertOnce(
+      `${title}\n\nSuccessi: ${ok}\nErrori: ${ko}\n\nControlla i log per i dettagli.`
+    );
+  }
+
+  function logDoorAction(doorName, status, error = null) {
+    const entry = {
+      timestamp: new Date().toISOString(),
+      door: doorName,
+      status,
+      error,
+      admin: true,
+    };
+    try {
+      const logs = JSON.parse(localStorage.getItem("doorActionLogs") || "[]");
+      logs.unshift(entry);
+      if (logs.length > 100) logs.splice(100);
+      localStorage.setItem("doorActionLogs", JSON.stringify(logs));
+    } catch (e) {
+      console.error("Errore salvataggio log:", e);
+    }
+  }
+
+  // =============================================
+  // SESSIONE LOCALE (reset)
+  // =============================================
+  function resetLocalSession() {
+    try {
+      const important = [
+        "secret_code",
+        "max_clicks",
+        "time_limit_minutes",
+        "code_version",
+        "checkin_start_time",
+        "checkin_end_time",
+        "checkin_time_enabled",
+        "devices",
+        "secure_links",
+        "adminAuthenticated",
+      ];
+      const toRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && !important.some((p) => k.startsWith(p))) toRemove.push(k);
+      }
+      toRemove.forEach((k) => localStorage.removeItem(k));
+      clearSessionCookies();
+      sessionStorage.removeItem("admin_session_ts");
+      sessionStorage.removeItem("admin_session_hash");
+      showResetResult();
+    } catch (e) {
+      console.error("Errore ripristino:", e);
+      showResetError(e);
+    }
+  }
+
+  function clearSessionCookies() {
+    try {
+      const cookies = document.cookie.split(";");
+      for (const c of cookies) {
+        const [name] = c.trim().split("=");
+        if (name && !name.startsWith("adminAuthenticated")) {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        }
+      }
+    } catch (e) {
+      console.error("Errore pulizia cookie:", e);
+    }
+  }
+
+  function showResetResult() {
+    const el = qs("localResetResult");
+    if (!el) return;
+    el.innerHTML = `
+      <div class="success-message">
+        <i class="fas fa-check-circle"></i>
+        Sessione locale ripristinata con successo!
+      </div>
+      <div class="reset-info">
+        <p><strong>Azioni eseguite:</strong></p>
+        <ul>
+          <li>Puliti dati di sessione</li>
+          <li>Puliti cookie di sessione</li>
+          <li>Mantenute impostazioni di sistema</li>
+        </ul>
+        <p>Ora puoi tornare alla schermata principale e inserire nuovamente il codice.</p>
+      </div>
+    `;
+    setTimeout(() => (el.innerHTML = ""), 5000);
+  }
+
+  function showResetError(error) {
+    const el = qs("localResetResult");
+    if (!el) return;
+    el.innerHTML = `
+      <div class="error-message">
+        <i class="fas fa-exclamation-circle"></i>
+        Errore nel ripristino: ${error.message}
+      </div>
+    `;
+  }
+
+  // =============================================
+  // BINDING EVENTI DOPO DOMContentLoaded
+  // =============================================
+  document.addEventListener("DOMContentLoaded", () => {
+    // Avvio UI corretta
+    if (isAdminSessionValid()) {
+      showAdminInterface();
+    } else {
+      showLoginModal();
+    }
+
+    // Focus campo password se presente
+    const pw = qs("adminPassword");
+    if (pw) pw.focus();
+
+    // Listener login + invio
+    on("btnLogin", "click", handleLogin);
+    const pwInput = qs("adminPassword");
+    if (pwInput)
+      pwInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") handleLogin();
+      });
+
+    // Logout opzionale
+    const logoutBtn = qs("btnLogout");
+    if (logoutBtn)
+      logoutBtn.addEventListener("click", () => {
+        clearAdminSession();
+        showLoginModal();
+      });
+
+    // Impostazioni codice segreto
+    on("btnCodeUpdate", "click", updateSecretCode);
+
+    // Impostazioni di sistema
+    on("btnSettingsUpdate", "click", updateSystemSettings);
+
+    // Orario check‑in
+    on("btnUpdateCheckinTime", "click", updateCheckinTime);
+    on("btnToggleCheckinTime", "click", toggleCheckinTime);
+
+    // Porte extra visibilità
+    on("btnExtraDoorsVisibility", "click", updateExtraDoorsVisibilitySettings);
+
+    // Link sicuri
+    on("btnGenerateSecureLink", "click", generateSecureLink);
+    on("btnCopySecureLink", "click", copyGeneratedLink);
+
+    // Reset locale
+    on("btnResetLocalSession", "click", () => {
+      if (confirm("Ripristinare la sessione locale?")) resetLocalSession();
+    });
+
+    // Reset globale (se presente in UI)
+    const resetSessionsBtn = qs("btnResetSessions");
+    if (resetSessionsBtn) {
+      resetSessionsBtn.addEventListener("click", async () => {
+        if (!confirm("Sbloccare e riportare al login tutti i client?")) return;
+        try {
+          await database.ref("settings").update({
+            session_reset_version: firebase.database.ServerValue.increment(1),
+            global_unblock_message:
+              "Sessioni ripristinate dall’amministratore 'refresh the page'",
+          });
+          alertOnce("Tutte le sessioni sono state ripristinate.");
+        } catch (e) {
+          console.error(e);
+          alertOnce("Errore nel ripristino delle sessioni.");
+        }
       });
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
-
-  showBulkOperationResult("Apertura multipla completata", results);
-}
-
-async function checkAllDoorsStatus() {
-  ADMIN_DEVICES.forEach((device) => {
-    if (device.container_id) {
-      const container = document.getElementById(device.container_id);
-      if (container && container.style.display === "none") return;
-    }
-    checkDoorStatus(device);
-  });
-}
-
-async function checkDoorStatus(device) {
-  try {
-    updateDoorStatus(device, "success", "Porta disponibile");
-  } catch (error) {
-    updateDoorStatus(device, "error", "Stato non disponibile");
-  }
-}
-
-function updateDoorStatus(device, status, message) {
-  const statusIndicator = document.getElementById(device.status_id);
-  const statusText = document.getElementById(device.status_text_id);
-
-  statusIndicator.className = "status-indicator";
-  statusText.textContent = `Stato: ${message}`;
-
-  switch (status) {
-    case "success":
-      statusIndicator.classList.add("status-on");
-      break;
-    case "error":
-      statusIndicator.classList.add("status-off");
-      break;
-    case "working":
-      statusIndicator.classList.add("status-working");
-      break;
-    default:
-      statusIndicator.classList.add("status-unknown");
-  }
-}
-
-function showBulkOperationResult(title, results) {
-  const successCount = results.filter((r) => r.status === "success").length;
-  const errorCount = results.filter((r) => r.status === "error").length;
-
-  alert(
-    `${title}\n\nSuccessi: ${successCount}\nErrori: ${errorCount}\n\nControlla i log per i dettagli.`
-  );
-}
-
-function logDoorAction(doorName, status, error = null) {
-  const logEntry = {
-    timestamp: new Date().toISOString(),
-    door: doorName,
-    status: status,
-    error: error,
-    admin: true,
-  };
-
-  try {
-    const doorLogs = JSON.parse(localStorage.getItem("doorActionLogs")) || [];
-    doorLogs.unshift(logEntry);
-    if (doorLogs.length > 100) doorLogs.splice(100);
-    localStorage.setItem("doorActionLogs", JSON.stringify(doorLogs));
-  } catch (error) {
-    console.error("Errore nel salvataggio log:", error);
-  }
-}
-
-// =============================================
-// GESTIONE SESSIONE LOCALE
-// =============================================
-
-document
-  .getElementById("btnResetLocalSession")
-  .addEventListener("click", function () {
-    if (
-      confirm(
-        "Sei sicuro di voler ripristinare la sessione locale? Questo cancellerà tutti i dati di sessione sul dispositivo corrente."
-      )
-    ) {
-      resetLocalSession();
-    }
+    // Aggiornamenti periodici
+    updateActiveLinksList();
+    updateLinkStatistics();
+    setInterval(updateActiveLinksList, 60_000);
+    setInterval(updateLinkStatistics, 5_000);
   });
 
-function resetLocalSession() {
-  try {
-    // Salva impostazioni importanti prima del reset
-    const importantKeys = [
-      "secret_code",
-      "max_clicks",
-      "time_limit_minutes",
-      "code_version",
-      "checkin_start_time",
-      "checkin_end_time",
-      "checkin_time_enabled",
-      "devices",
-      "secure_links",
-      "adminAuthenticated",
-    ];
-
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!importantKeys.some((importantKey) => key.startsWith(importantKey))) {
-        keysToRemove.push(key);
-      }
-    }
-
-    keysToRemove.forEach((key) => localStorage.removeItem(key));
-    clearSessionCookies();
-
-    showResetResult();
-  } catch (error) {
-    console.error("Errore nel ripristino della sessione locale:", error);
-    showResetError(error);
-  }
-}
-
-function clearSessionCookies() {
-  try {
-    const cookies = document.cookie.split(";");
-    for (let cookie of cookies) {
-      const [name] = cookie.trim().split("=");
-      if (name && !name.startsWith("adminAuthenticated")) {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-      }
-    }
-  } catch (error) {
-    console.error("Errore nella pulizia dei cookie:", error);
-  }
-}
-
-function showResetResult() {
-  const resultDiv = document.getElementById("localResetResult");
-  resultDiv.innerHTML = `
-    <div class="success-message">
-      <i class="fas fa-check-circle"></i>
-      Sessione locale ripristinata con successo!
-    </div>
-    <div class="reset-info">
-      <p><strong>Azioni eseguite:</strong></p>
-      <ul>
-        <li>Puliti dati di sessione</li>
-        <li>Puliti cookie di sessione</li>
-        <li>Mantenute impostazioni di sistema</li>
-      </ul>
-      <p>Ora puoi tornare alla schermata principale e inserire nuovamente il codice.</p>
-    </div>
-  `;
-
-  setTimeout(() => (resultDiv.innerHTML = ""), 5000);
-}
-
-function showResetError(error) {
-  const resultDiv = document.getElementById("localResetResult");
-  resultDiv.innerHTML = `
-    <div class="error-message">
-      <i class="fas fa-exclamation-circle"></i>
-      Errore nel ripristino: ${error.message}
-    </div>
-  `;
-}
-
-// =============================================
-// INIZIALIZZAZIONE FINALE
-// =============================================
-
-document.addEventListener("DOMContentLoaded", function () {
-  updateActiveLinksList();
-  updateLinkStatistics();
-  setInterval(updateActiveLinksList, 60000);
-  setInterval(updateLinkStatistics, 5000);
-});
+  // =============================================
+  // ESPORTA FUNZIONI GLOBALI (per compatibilità con onclick)
+  // =============================================
+  Object.assign(window, {
+    // Utilità
+    qs,
+    sha256,
+    // Sessione/admin
+    isAdminSessionValid,
+    establishAdminSession,
+    clearAdminSession,
+    showAdminInterface,
+    showLoginModal,
+    handleLogin,
+    // Settings
+    saveSettingToFirebase,
+    loadSettingsFromFirebase,
+    loadSettings,
+    applySettingsFromFirebase,
+    applySettingsFromLocalStorage,
+    updateSecretCode,
+    updateSystemSettings,
+    // Check‑in time
+    loadCheckinTimeSettings,
+    updateCheckinTime,
+    isValidTimeRange,
+    toggleCheckinTime,
+    // Porte extra
+    loadExtraDoorsVisibility,
+    updateExtraDoorsVisibilitySettings,
+    // Link sicuri
+    generateUniqueId,
+    generateSecureLink,
+    saveSecureLink,
+    copyGeneratedLink,
+    updateActiveLinksList,
+    renderActiveLinks,
+    createLinkElement,
+    copySecureLink,
+    revokeSecureLink,
+    updateLinkStatistics,
+    updateStatisticsUI,
+    // Porte Shelly
+    initDoorControls,
+    updateExtraDoorsVisibility,
+    openDoor,
+    handleDoorSuccess,
+    handleDoorError,
+    resetDoorButton,
+    openAllDoors,
+    checkAllDoorsStatus,
+    checkDoorStatus,
+    updateDoorStatus,
+    showBulkOperationResult,
+    logDoorAction,
+    // Sessione locale
+    resetLocalSession,
+    clearSessionCookies,
+    showResetResult,
+    showResetError,
+  });
+})();
