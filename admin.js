@@ -5,15 +5,14 @@
   // CONFIGURAZIONE E INIZIALIZZAZIONE
   // =============================================
   const firebaseConfig = {
-    apiKey: "AIzaSyCuy3Sak96soCla7b5Yb5wmkdVfMqAXmok",
-    authDomain: "check-in-4e0e9.firebaseapp.com",
+    apiKey: "AIzaSyD8oQsvmn7nyV2nYnExD-xw6gchwRJ0Bog",
+    authDomain: "multi-client-77378.firebaseapp.com",
     databaseURL:
-      "https://check-in-4e0e9-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "check-in-4e0e9",
-    storageBucket: "check-in-4e0e9.firebasestorage.app",
-    messagingSenderId: "723880990177",
-    appId: "1:723880990177:web:f002733b2cc2e50d172ea0",
-    measurementId: "G-H97GB9L4F5",
+      "https://multi-client-77378-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "multi-client-77378",
+    storageBucket: "multi-client-77378.firebasestorage.app",
+    messagingSenderId: "654507957917",
+    appId: "1:654507957917:web:0a94abff41ff235e113e74",
   };
 
   // Valori di fallback (possono essere sovrascritti da settings Firebase)
@@ -37,8 +36,7 @@
     },
     {
       id: "34945478d595",
-      auth_key:
-        "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
+      auth_key: "",
       button_id: "btnOpenAptDoor",
       status_id: "aptDoorStatus",
       status_text_id: "aptDoorStatusText",
@@ -47,8 +45,7 @@
     },
     {
       id: "3494547ab161",
-      auth_key:
-        "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
+      auth_key: "",
       button_id: "btnOpenExtraDoor1",
       status_id: "extraDoor1Status",
       status_text_id: "extraDoor1StatusText",
@@ -58,7 +55,7 @@
     },
     {
       id: "placeholder_id_2",
-      auth_key: "placeholder_auth_key_2",
+      auth_key: "",
       button_id: "btnOpenExtraDoor2",
       status_id: "extraDoor2Status",
       status_text_id: "extraDoor2StatusText",
@@ -73,6 +70,39 @@
     firebase.initializeApp(firebaseConfig);
   }
   const database = firebase.database();
+  // Multi-tenant support: resolve tenantId from URL (?t=TENANT) or localStorage
+  const TENANT_ID = (() => {
+    try {
+      const urlT = new URLSearchParams(window.location.search).get('t');
+      if (urlT) {
+        localStorage.setItem('tenantId', urlT);
+        return urlT;
+      }
+      return localStorage.getItem('tenantId') || 'default';
+    } catch {
+      return 'default';
+    }
+  })();
+
+  // Monkey-patch database.ref to namespace under tenants/{TENANT_ID}
+  try {
+    const _origRef = database.ref.bind(database);
+    database.ref = (path) => {
+      if (!path) return _origRef();
+      if (String(path).startsWith('tenants/')) return _origRef(path);
+      return _origRef(`tenants/${TENANT_ID}/${path}`);
+    };
+  } catch (e) {
+    console.warn('Tenant namespacing patch failed:', e);
+  }
+
+  // Cloud Functions handle privileged actions (e.g., open doors)
+  let functionsInstance = null;
+  try {
+    functionsInstance = firebase.functions();
+  } catch (e) {
+    console.warn('Firebase Functions not available:', e);
+  }
   // Rendi la sessione persistente tra i reload del browser
   try {
     firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
@@ -124,6 +154,7 @@
   // AUTENTICAZIONE ADMIN (Firebase Email/Password)
   // =============================================
   const allowedAdminEmails = new Set();
+  let currentClaims = {};
 
   async function loadAllowedAdminEmails() {
     try {
@@ -147,6 +178,7 @@
   function isCurrentUserAdmin() {
     const user = firebase.auth().currentUser;
     if (!user) return false;
+    if (currentClaims?.isSuperAdmin === true) return true;
     if (allowedAdminEmails.size === 0) {
       console.warn(
         "Nessuna allowlist admin configurata: consento l'accesso a qualsiasi utente autenticato"
@@ -176,6 +208,10 @@
     if (adminContainer) adminContainer.style.display = "block";
     loadSettings();
     initDoorControls();
+    try {
+      const sa = qs("superAdminSection");
+      if (sa) sa.style.display = currentClaims?.isSuperAdmin ? "block" : "none";
+    } catch {}
   }
 
   function showLoginModal() {
@@ -203,6 +239,10 @@
     }
     try {
       await firebase.auth().signInWithEmailAndPassword(email, password);
+      try {
+        const res = await firebase.auth().currentUser.getIdTokenResult(true);
+        currentClaims = res?.claims || {};
+      } catch {}
       // onAuthStateChanged gestira l'UI
     } catch (e) {
       console.error("Firebase auth error:", e?.code, e?.message);
@@ -841,42 +881,13 @@
     updateDoorStatus(device, "working", "Apertura in corso...");
 
     try {
-      const resp = await fetchWithTimeout(
-        SHELLY_API_URL,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: device.id,
-            auth_key: device.auth_key,
-            channel: 0,
-            on: true,
-            turn: "on",
-          }),
-        },
-        12000
-      );
-
-      if (!resp.ok) throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
-      const text = await resp.text();
-      let data = { ok: true };
-      if (text.trim() !== "") {
-        try {
-          data = JSON.parse(text);
-        } catch {
-          /* risposta non JSON */
-        }
-      }
-
-      if (data && data.ok) {
+      if (!functionsInstance) throw new Error('Cloud Functions non disponibile');
+      const openDoorFn = functionsInstance.httpsCallable('openDoor');
+      const res = await openDoorFn({ deviceId: device.id, tenantId: TENANT_ID });
+      if (res && res.data && res.data.ok) {
         handleDoorSuccess(device, resultDiv, "Porta aperta con successo");
       } else {
-        handleDoorSuccess(
-          device,
-          resultDiv,
-          "Porta aperta (risposta non standard)",
-          text
-        );
+        handleDoorSuccess(device, resultDiv, "Porta aperta (risposta non standard)");
       }
     } catch (error) {
       handleDoorError(device, resultDiv, error);
@@ -1103,6 +1114,10 @@
     // Auth state listener
     firebase.auth().onAuthStateChanged(async (user) => {
       if (user && isCurrentUserAdmin()) {
+        try {
+          const res = await user.getIdTokenResult();
+          currentClaims = res?.claims || {};
+        } catch {}
         showAdminInterface();
       } else {
         if (user && !isCurrentUserAdmin()) {
@@ -1159,6 +1174,119 @@
     on("btnResetLocalSession", "click", () => {
       if (confirm("Ripristinare la sessione locale?")) resetLocalSession();
     });
+
+    // =============================
+    // Super Admin bindings
+    // =============================
+    on("btnSaCreateTenant", "click", async () => {
+      try {
+        const tenantId = (qs("saTenantId")?.value || "").trim();
+        const name = (qs("saTenantName")?.value || "").trim();
+        if (!tenantId) return alertOnce("Inserisci un Tenant ID");
+        if (!functionsInstance) throw new Error("Cloud Functions non disponibile");
+        const fn = functionsInstance.httpsCallable("createTenant");
+        await fn({ tenantId, name });
+        alertOnce("Tenant creato/aggiornato");
+      } catch (e) {
+        alertOnce("Errore creazione tenant: " + (e.message || e));
+      }
+    });
+
+    on("btnSaAssignUser", "click", async () => {
+      try {
+        const email = (qs("saUserEmail")?.value || "").trim();
+        const tenantId = (qs("saAssignTenantId")?.value || "").trim();
+        const role = (qs("saUserRole")?.value || "admin").trim();
+        if (!email || !tenantId) return alertOnce("Inserisci email e tenant");
+        if (!functionsInstance) throw new Error("Cloud Functions non disponibile");
+        const fn = functionsInstance.httpsCallable("setUserTenantByEmail");
+        await fn({ email, tenantId, role });
+        alertOnce("Utente assegnato al tenant");
+      } catch (e) {
+        alertOnce("Errore assegnazione utente: " + (e.message || e));
+      }
+    });
+
+    async function refreshTenantsList() {
+      const listDiv = qs("saTenantsList");
+      if (!listDiv) return;
+      listDiv.innerHTML = "Caricamento...";
+      try {
+        if (!functionsInstance) throw new Error("Cloud Functions non disponibile");
+        const fn = functionsInstance.httpsCallable("listTenants");
+        const res = await fn();
+        const tenants = res?.data?.tenants || [];
+        if (tenants.length === 0) {
+          listDiv.innerHTML = "<em>Nessun tenant</em>";
+          return;
+        }
+        listDiv.innerHTML = tenants
+          .map(
+            (t) => `
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee">
+              <div>
+                <strong>${t.id}</strong>
+                <span style="color:#666">- ${t.name || ""}</span>
+              </div>
+              <div style="display:flex; gap:8px">
+                <button class="btn btn-secondary" data-tenant="${t.id}" data-action="switch">Usa tenant</button>
+              </div>
+            </div>`
+          )
+          .join("");
+        listDiv.querySelectorAll('button[data-action="switch"]').forEach((btn) => {
+          btn.addEventListener("click", (ev) => {
+            const id = ev.currentTarget.getAttribute("data-tenant");
+            localStorage.setItem("tenantId", id);
+            alertOnce("Tenant corrente impostato a: " + id + "\nRicarico pagina...");
+            setTimeout(() => location.reload(), 600);
+          });
+        });
+      } catch (e) {
+        listDiv.innerHTML = "Errore caricamento tenants";
+      }
+    }
+
+    on("btnSaRefreshTenants", "click", refreshTenantsList);
+
+    on("btnSaSetDevice", "click", async () => {
+      try {
+        const tenantId = (qs("saDeviceTenantId")?.value || "").trim();
+        const deviceId = (qs("saDeviceId")?.value || "").trim();
+        const auth_key = (qs("saDeviceAuthKey")?.value || "").trim();
+        if (!tenantId || !deviceId || !auth_key)
+          return alertOnce("Compila tenant, device e auth_key");
+        if (!functionsInstance) throw new Error("Cloud Functions non disponibile");
+        const fn = functionsInstance.httpsCallable("setDeviceConfig");
+        await fn({ tenantId, deviceId, auth_key });
+        alertOnce("Configurazione dispositivo salvata");
+      } catch (e) {
+        alertOnce("Errore salvataggio dispositivo: " + (e.message || e));
+      }
+    });
+
+    on("btnSaGrantSuper", "click", async () => {
+      try {
+        const email = (qs("saSuperAdminEmail")?.value || "").trim();
+        if (!email) return alertOnce("Inserisci email");
+        if (!functionsInstance) throw new Error("Cloud Functions non disponibile");
+        const fn = functionsInstance.httpsCallable("setSuperAdminByEmail");
+        await fn({ email, value: true });
+        alertOnce("Permessi Super Admin assegnati");
+      } catch (e) {
+        alertOnce("Errore assegnazione Super Admin: " + (e.message || e));
+      }
+    });
+
+    // Precarica elenco tenants se super admin
+    try {
+      const u = firebase.auth().currentUser;
+      if (u) {
+        const res = await u.getIdTokenResult();
+        currentClaims = res?.claims || {};
+        if (currentClaims?.isSuperAdmin) refreshTenantsList();
+      }
+    } catch {}
 
     // Reset globale (se presente in UI)
     const resetSessionsBtn = qs("btnResetSessions");

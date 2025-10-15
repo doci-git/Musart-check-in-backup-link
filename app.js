@@ -5,15 +5,14 @@
   // CONFIGURAZIONE E INIZIALIZZAZIONE
   // =============================================
   const firebaseConfig = {
-    apiKey: "AIzaSyCuy3Sak96soCla7b5Yb5wmkdVfMqAXmok",
-    authDomain: "check-in-4e0e9.firebaseapp.com",
+    apiKey: "AIzaSyD8oQsvmn7nyV2nYnExD-xw6gchwRJ0Bog",
+    authDomain: "multi-client-77378.firebaseapp.com",
     databaseURL:
-      "https://check-in-4e0e9-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "check-in-4e0e9",
-    storageBucket: "check-in-4e0e9.firebasestorage.app",
-    messagingSenderId: "723880990177",
-    appId: "1:723880990177:web:f002733b2cc2e50d172ea0",
-    measurementId: "G-H97GB9L4F5",
+      "https://multi-client-77378-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "multi-client-77378",
+    storageBucket: "multi-client-77378.firebasestorage.app",
+    messagingSenderId: "654507957917",
+    appId: "1:654507957917:web:0a94abff41ff235e113e74",
   };
 
   const BASE_URL_SET =
@@ -27,31 +26,28 @@
   const DEVICES = Object.freeze([
     {
       id: "e4b063f0c38c",
-      auth_key:
-        "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
+      auth_key: "",
       storage_key: "clicks_MainDoor",
       button_id: "MainDoor",
       visible: true,
     },
     {
       id: "34945478d595",
-      auth_key:
-        "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
+      auth_key: "",
       storage_key: "clicks_AptDoor",
       button_id: "AptDoor",
       visible: true,
     },
     {
       id: "3494547ab161",
-      auth_key:
-        "MWI2MDc4dWlk4908A71DA809FCEC05C5D1F360943FBFC6A7934EC0FD9E3CFEAF03F8F5A6A4A0C60665B97A1AA2E2",
+      auth_key: "",
       storage_key: "clicks_ExtraDoor1",
       button_id: "ExtraDoor1",
       visible: false,
     },
     {
       id: "placeholder_id_2",
-      auth_key: "placeholder_auth_key_2",
+      auth_key: "",
       storage_key: "clicks_ExtraDoor2",
       button_id: "ExtraDoor2",
       visible: false,
@@ -92,6 +88,47 @@
     firebase.initializeApp(firebaseConfig);
   }
   const database = firebase.database();
+  // Ensure the client has an Auth user (anonymous is fine for callable access)
+  try {
+    if (!firebase.auth().currentUser) {
+      firebase.auth().signInAnonymously().catch(() => {});
+    }
+  } catch (e) {
+    console.warn('Anonymous auth failed (non-blocking):', e);
+  }
+  // Multi-tenant support: resolve tenantId from URL (?t=TENANT) or localStorage
+  const TENANT_ID = (() => {
+    try {
+      const urlT = new URLSearchParams(window.location.search).get('t');
+      if (urlT) {
+        localStorage.setItem('tenantId', urlT);
+        return urlT;
+      }
+      return localStorage.getItem('tenantId') || 'default';
+    } catch {
+      return 'default';
+    }
+  })();
+
+  // Monkey-patch database.ref to namespace under tenants/{TENANT_ID}
+  try {
+    const _origRef = database.ref.bind(database);
+    database.ref = (path) => {
+      if (!path) return _origRef();
+      if (String(path).startsWith('tenants/')) return _origRef(path);
+      return _origRef(`tenants/${TENANT_ID}/${path}`);
+    };
+  } catch (e) {
+    console.warn('Tenant namespacing patch failed:', e);
+  }
+
+  // Cloud Functions instance
+  let functionsInstance = null;
+  try {
+    functionsInstance = firebase.functions();
+  } catch (e) {
+    console.warn('Firebase Functions not available:', e);
+  }
 
   // =============================================
   // UTILS
@@ -715,32 +752,16 @@
     updateButtonState(device);
 
     try {
-      const response = await fetchWithTimeout(
-        BASE_URL_SET,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: device.id,
-            auth_key: device.auth_key,
-            channel: 0,
-            on: true,
-            turn: "on",
-          }),
-        },
-        12000
-      );
-
-      if (response.ok) {
+      if (!functionsInstance) throw new Error('Cloud Functions non disponibile');
+      const openDoorFn = functionsInstance.httpsCallable('openDoor');
+      const res = await openDoorFn({ deviceId: device.id, tenantId: TENANT_ID });
+      if (res && res.data && res.data.ok) {
         showDevicePopup(device, clicksLeft);
       } else {
+        // fallback: revert click
         setClicksLeft(device.storage_key, clicksLeft + 1);
         updateButtonState(device);
-        console.error(
-          "Errore nell'attivazione del dispositivo:",
-          response.status,
-          response.statusText
-        );
+        console.error('Apertura porta: risposta non standard', res?.data);
       }
     } catch (error) {
       console.error("Attivazione dispositivo fallita:", error);
