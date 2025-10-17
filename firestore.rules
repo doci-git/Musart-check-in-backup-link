@@ -1,0 +1,179 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to tenant documents. Only authenticated users who are members of the tenant can read or write.
+     * @path /tenants/{tenantId}
+     * @allow (get, list): If the user is authenticated and is a member of the tenant.
+     * @allow (create, update, delete): If the user is authenticated and has the 'admin' role in the tenant.
+     * @deny (create, update, delete): If the user is not authenticated or does not have 'admin' role.
+     * @principle Enforces role-based access control for tenant management.
+     */
+    match /tenants/{tenantId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isMember(tenantId) {
+        return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/tenants/$(tenantId)).data.members;
+      }
+
+      function isAdmin(tenantId) {
+        return isSignedIn() && get(/databases/$(database)/documents/tenants/$(tenantId)).data.members[request.auth.uid] == 'admin';
+      }
+
+      allow get: if isSignedIn() && isMember(tenantId);
+      allow list: if false;
+
+      allow create: if isSignedIn() && request.resource.data.members[request.auth.uid] == 'admin';
+      allow update: if isSignedIn() && isAdmin(tenantId);
+      allow delete: if isSignedIn() && isAdmin(tenantId);
+    }
+
+    /**
+     * @description Controls access to temporary access codes for tenants. Only authenticated users who are members of the tenant can read or write.
+     * @path /tenants/{tenantId}/tempAccessCodes/{tempAccessCodeId}
+     * @allow (get, list): If the user is authenticated and is a member of the tenant.
+     * @allow (create, update, delete): If the user is authenticated and has the 'admin' role in the tenant.
+     * @deny (create, update, delete): If the user is not authenticated or does not have 'admin' role.
+     * @principle Enforces role-based access control for temporary access code management.
+     */
+    match /tenants/{tenantId}/tempAccessCodes/{tempAccessCodeId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isMember(tenantId) {
+        return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/tenants/$(tenantId)).data.members;
+      }
+
+      function isAdmin(tenantId) {
+        return isSignedIn() && get(/databases/$(database)/documents/tenants/$(tenantId)).data.members[request.auth.uid] == 'admin';
+      }
+
+      allow get: if isSignedIn() && isMember(tenantId);
+      allow list: if false;
+
+      allow create: if isSignedIn() && isAdmin(tenantId);
+      allow update: if isSignedIn() && isAdmin(tenantId);
+      allow delete: if isSignedIn() && isAdmin(tenantId);
+    }
+
+    /**
+     * @description Controls access to property documents. Only authenticated users who are members of the parent tenant can read or write.
+     * @path /tenants/{tenantId}/properties/{propertyId}
+     * @allow (get, list): If the user is authenticated and is a member of the parent tenant.
+     * @allow (create, update, delete): If the user is authenticated and has the 'admin' role in the parent tenant.
+     * @deny (create, update, delete): If the user is not authenticated or does not have 'admin' role.
+     * @principle Enforces role-based access control for property management.
+     */
+    match /tenants/{tenantId}/properties/{propertyId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isMember(tenantId) {
+        return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/tenants/$(tenantId)).data.members;
+      }
+
+      function isAdmin(tenantId) {
+        return isSignedIn() && get(/databases/$(database)/documents/tenants/$(tenantId)).data.members[request.auth.uid] == 'admin';
+      }
+
+      allow get: if isSignedIn() && isMember(tenantId);
+      allow list: if false;
+
+      allow create: if isSignedIn() && isAdmin(tenantId);
+      allow update: if isSignedIn() && isAdmin(tenantId);
+      allow delete: if isSignedIn() && isAdmin(tenantId);
+    }
+
+    /**
+     * @description Controls access to access code documents. Only authenticated users who are members of the parent tenant can read or write.
+     * @path /tenants/{tenantId}/properties/{propertyId}/accessCodes/{accessCodeId}
+     * @allow (get, list): If the user is authenticated and is a member of the parent tenant.
+     * @allow (create, update, delete): If the user is authenticated and has the 'admin' role in the parent tenant.
+     * @deny (create, update, delete): If the user is not authenticated or does not have 'admin' role.
+     * @principle Enforces role-based access control for access code management.
+     */
+    match /tenants/{tenantId}/properties/{propertyId}/accessCodes/{accessCodeId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isMember(tenantId) {
+        return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/tenants/$(tenantId)).data.members;
+      }
+
+      function isAdmin(tenantId) {
+        return isSignedIn() && get(/databases/$(database)/documents/tenants/$(tenantId)).data.members[request.auth.uid] == 'admin';
+      }
+
+      allow get: if isSignedIn() && isMember(tenantId);
+      allow list: if false;
+
+      allow create: if isSignedIn() && isAdmin(tenantId);
+      allow update: if isSignedIn() && isAdmin(tenantId);
+      allow delete: if isSignedIn() && isAdmin(tenantId);
+    }
+
+    /**
+     * @description Controls access to door documents. Only authenticated users who are members of the parent tenant can read or write.
+     * @path /tenants/{tenantId}/properties/{propertyId}/doors/{doorId}
+     * @allow (get, list): If the user is authenticated and is a member of the parent tenant.
+     * @allow (create, update, delete): If the user is authenticated and has the 'admin' role in the parent tenant.
+     * @deny (create, update, delete): If the user is not authenticated or does not have 'admin' role.
+     * @principle Enforces role-based access control for door management.
+     */
+    match /tenants/{tenantId}/properties/{propertyId}/doors/{doorId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isMember(tenantId) {
+        return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/tenants/$(tenantId)).data.members;
+      }
+
+      function isAdmin(tenantId) {
+        return isSignedIn() && get(/databases/$(database)/documents/tenants/$(tenantId)).data.members[request.auth.uid] == 'admin';
+      }
+
+      allow get: if isSignedIn() && isMember(tenantId);
+      allow list: if false;
+
+      allow create: if isSignedIn() && isAdmin(tenantId);
+      allow update: if isSignedIn() && isAdmin(tenantId);
+      allow delete: if isSignedIn() && isAdmin(tenantId);
+    }
+
+    /**
+     * @description Controls access to instruction video documents. Only authenticated users who are members of the parent tenant can read or write.
+     * @path /tenants/{tenantId}/properties/{propertyId}/instructionVideos/{instructionVideoId}
+     * @allow (get, list): If the user is authenticated and is a member of the parent tenant.
+     * @allow (create, update, delete): If the user is authenticated and has the 'admin' role in the parent tenant.
+     * @deny (create, update, delete): If the user is not authenticated or does not have 'admin' role.
+     * @principle Enforces role-based access control for instruction video management.
+     */
+    match /tenants/{tenantId}/properties/{propertyId}/instructionVideos/{instructionVideoId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isMember(tenantId) {
+        return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/tenants/$(tenantId)).data.members;
+      }
+
+      function isAdmin(tenantId) {
+        return isSignedIn() && get(/databases/$(database)/documents/tenants/$(tenantId)).data.members[request.auth.uid] == 'admin';
+      }
+
+      allow get: if isSignedIn() && isMember(tenantId);
+      allow list: if false;
+
+      allow create: if isSignedIn() && isAdmin(tenantId);
+      allow update: if isSignedIn() && isAdmin(tenantId);
+      allow delete: if isSignedIn() && isAdmin(tenantId);
+    }
+  }
+}

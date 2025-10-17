@@ -12,7 +12,7 @@
     projectId: "multi-client-77378",
     storageBucket: "multi-client-77378.firebasestorage.app",
     messagingSenderId: "654507957917",
-    appId: "1:654507957917:web:0a94abff41ff235e113e74",
+    appId: "1:654507957917:web:3be18327d2951774113e74",
   };
 
   // Valori di fallback (possono essere sovrascritti da settings Firebase)
@@ -71,14 +71,19 @@
   }
   const database = firebase.database();
   // Multi-tenant support: resolve tenantId from URL (?t=TENANT) or localStorage
+  function sanitizeTenantId(val) {
+    try {
+      const s = String(val || '').trim();
+      if (!s || !/^[A-Za-z0-9_-]+$/.test(s)) return 'default';
+      return s;
+    } catch { return 'default'; }
+  }
   const TENANT_ID = (() => {
     try {
       const urlT = new URLSearchParams(window.location.search).get('t');
-      if (urlT) {
-        localStorage.setItem('tenantId', urlT);
-        return urlT;
-      }
-      return localStorage.getItem('tenantId') || 'default';
+      const chosen = sanitizeTenantId(urlT || localStorage.getItem('tenantId') || 'default');
+      try { localStorage.setItem('tenantId', chosen); } catch {}
+      return chosen;
     } catch {
       return 'default';
     }
@@ -99,7 +104,8 @@
   // Cloud Functions handle privileged actions (e.g., open doors)
   let functionsInstance = null;
   try {
-    functionsInstance = firebase.functions();
+    // Use the same region as deployed functions
+    functionsInstance = firebase.functions(undefined, 'europe-west1');
   } catch (e) {
     console.warn('Firebase Functions not available:', e);
   }
@@ -178,7 +184,6 @@
   function isCurrentUserAdmin() {
     const user = firebase.auth().currentUser;
     if (!user) return false;
-    if (currentClaims?.isSuperAdmin === true) return true;
     if (allowedAdminEmails.size === 0) {
       console.warn(
         "Nessuna allowlist admin configurata: consento l'accesso a qualsiasi utente autenticato"
@@ -208,10 +213,7 @@
     if (adminContainer) adminContainer.style.display = "block";
     loadSettings();
     initDoorControls();
-    try {
-      const sa = qs("superAdminSection");
-      if (sa) sa.style.display = currentClaims?.isSuperAdmin ? "block" : "none";
-    } catch {}
+    try {} catch {}
   }
 
   function showLoginModal() {
@@ -220,6 +222,7 @@
     if (loginModal) loginModal.classList.remove("hidden");
     if (adminContainer) adminContainer.style.display = "none";
   }
+
 
   async function handleLogin() {
     const emailEl = qs("adminEmail");
@@ -1175,108 +1178,7 @@
       if (confirm("Ripristinare la sessione locale?")) resetLocalSession();
     });
 
-    // =============================
-    // Super Admin bindings
-    // =============================
-    on("btnSaCreateTenant", "click", async () => {
-      try {
-        const tenantId = (qs("saTenantId")?.value || "").trim();
-        const name = (qs("saTenantName")?.value || "").trim();
-        if (!tenantId) return alertOnce("Inserisci un Tenant ID");
-        if (!functionsInstance) throw new Error("Cloud Functions non disponibile");
-        const fn = functionsInstance.httpsCallable("createTenant");
-        await fn({ tenantId, name });
-        alertOnce("Tenant creato/aggiornato");
-      } catch (e) {
-        alertOnce("Errore creazione tenant: " + (e.message || e));
-      }
-    });
-
-    on("btnSaAssignUser", "click", async () => {
-      try {
-        const email = (qs("saUserEmail")?.value || "").trim();
-        const tenantId = (qs("saAssignTenantId")?.value || "").trim();
-        const role = (qs("saUserRole")?.value || "admin").trim();
-        if (!email || !tenantId) return alertOnce("Inserisci email e tenant");
-        if (!functionsInstance) throw new Error("Cloud Functions non disponibile");
-        const fn = functionsInstance.httpsCallable("setUserTenantByEmail");
-        await fn({ email, tenantId, role });
-        alertOnce("Utente assegnato al tenant");
-      } catch (e) {
-        alertOnce("Errore assegnazione utente: " + (e.message || e));
-      }
-    });
-
-    async function refreshTenantsList() {
-      const listDiv = qs("saTenantsList");
-      if (!listDiv) return;
-      listDiv.innerHTML = "Caricamento...";
-      try {
-        if (!functionsInstance) throw new Error("Cloud Functions non disponibile");
-        const fn = functionsInstance.httpsCallable("listTenants");
-        const res = await fn();
-        const tenants = res?.data?.tenants || [];
-        if (tenants.length === 0) {
-          listDiv.innerHTML = "<em>Nessun tenant</em>";
-          return;
-        }
-        listDiv.innerHTML = tenants
-          .map(
-            (t) => `
-            <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee">
-              <div>
-                <strong>${t.id}</strong>
-                <span style="color:#666">- ${t.name || ""}</span>
-              </div>
-              <div style="display:flex; gap:8px">
-                <button class="btn btn-secondary" data-tenant="${t.id}" data-action="switch">Usa tenant</button>
-              </div>
-            </div>`
-          )
-          .join("");
-        listDiv.querySelectorAll('button[data-action="switch"]').forEach((btn) => {
-          btn.addEventListener("click", (ev) => {
-            const id = ev.currentTarget.getAttribute("data-tenant");
-            localStorage.setItem("tenantId", id);
-            alertOnce("Tenant corrente impostato a: " + id + "\nRicarico pagina...");
-            setTimeout(() => location.reload(), 600);
-          });
-        });
-      } catch (e) {
-        listDiv.innerHTML = "Errore caricamento tenants";
-      }
-    }
-
-    on("btnSaRefreshTenants", "click", refreshTenantsList);
-
-    on("btnSaSetDevice", "click", async () => {
-      try {
-        const tenantId = (qs("saDeviceTenantId")?.value || "").trim();
-        const deviceId = (qs("saDeviceId")?.value || "").trim();
-        const auth_key = (qs("saDeviceAuthKey")?.value || "").trim();
-        if (!tenantId || !deviceId || !auth_key)
-          return alertOnce("Compila tenant, device e auth_key");
-        if (!functionsInstance) throw new Error("Cloud Functions non disponibile");
-        const fn = functionsInstance.httpsCallable("setDeviceConfig");
-        await fn({ tenantId, deviceId, auth_key });
-        alertOnce("Configurazione dispositivo salvata");
-      } catch (e) {
-        alertOnce("Errore salvataggio dispositivo: " + (e.message || e));
-      }
-    });
-
-    on("btnSaGrantSuper", "click", async () => {
-      try {
-        const email = (qs("saSuperAdminEmail")?.value || "").trim();
-        if (!email) return alertOnce("Inserisci email");
-        if (!functionsInstance) throw new Error("Cloud Functions non disponibile");
-        const fn = functionsInstance.httpsCallable("setSuperAdminByEmail");
-        await fn({ email, value: true });
-        alertOnce("Permessi Super Admin assegnati");
-      } catch (e) {
-        alertOnce("Errore assegnazione Super Admin: " + (e.message || e));
-      }
-    });
+    // Super Admin bindings removed
 
     // Precarica elenco tenants se super admin
     try {
@@ -1284,7 +1186,7 @@
       if (u) {
         const res = await u.getIdTokenResult();
         currentClaims = res?.claims || {};
-        if (currentClaims?.isSuperAdmin) refreshTenantsList();
+    
       }
     } catch {}
 

@@ -12,7 +12,7 @@
     projectId: "multi-client-77378",
     storageBucket: "multi-client-77378.firebasestorage.app",
     messagingSenderId: "654507957917",
-    appId: "1:654507957917:web:0a94abff41ff235e113e74",
+    appId: "1:654507957917:web:3be18327d2951774113e74",
   };
 
   const BASE_URL_SET =
@@ -97,14 +97,21 @@
     console.warn('Anonymous auth failed (non-blocking):', e);
   }
   // Multi-tenant support: resolve tenantId from URL (?t=TENANT) or localStorage
+  function sanitizeTenantId(val) {
+    try {
+      const s = String(val || '').trim();
+      // Realtime DB path segment must not contain . # $ [ ] / and should not be empty
+      if (!s || !/^[A-Za-z0-9_-]+$/.test(s)) return 'default';
+      return s;
+    } catch { return 'default'; }
+  }
   const TENANT_ID = (() => {
     try {
       const urlT = new URLSearchParams(window.location.search).get('t');
-      if (urlT) {
-        localStorage.setItem('tenantId', urlT);
-        return urlT;
-      }
-      return localStorage.getItem('tenantId') || 'default';
+      const chosen = sanitizeTenantId(urlT || localStorage.getItem('tenantId') || 'default');
+      // Persist sanitized value to avoid invalid path segments later
+      try { localStorage.setItem('tenantId', chosen); } catch {}
+      return chosen;
     } catch {
       return 'default';
     }
@@ -125,7 +132,8 @@
   // Cloud Functions instance
   let functionsInstance = null;
   try {
-    functionsInstance = firebase.functions();
+    // Use the same region as deployed functions
+    functionsInstance = firebase.functions(undefined, 'europe-west1');
   } catch (e) {
     console.warn('Firebase Functions not available:', e);
   }
@@ -754,7 +762,7 @@
     try {
       if (!functionsInstance) throw new Error('Cloud Functions non disponibile');
       const openDoorFn = functionsInstance.httpsCallable('openDoor');
-      const res = await openDoorFn({ deviceId: device.id, tenantId: TENANT_ID });
+      const res = await openDoorFn({ deviceId: device.id, tenantId: TENANT_ID, tokenId: (isTokenSession ? (currentTokenId || null) : null) });
       if (res && res.data && res.data.ok) {
         showDevicePopup(device, clicksLeft);
       } else {

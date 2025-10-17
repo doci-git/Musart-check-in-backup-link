@@ -1,25 +1,31 @@
 {
   "rules": {
-    ".read": false,
-    ".write": false,
+    ".read": true,
+    ".write": true,
     "tenants": {
       "$tenantId": {
-        ".read": "auth != null && (auth.token.tenantId == $tenantId || auth.token.isSuperAdmin == true)",
-        ".write": "auth != null && (auth.token.tenantId == $tenantId || auth.token.isSuperAdmin == true)",
+        ".read": "auth != null && auth.token.tenantId == $tenantId",
+        ".write": "auth != null && auth.token.tenantId == $tenantId",
 
-        // Publicly readable settings for client app (read-only)
+      
         "settings": {
           ".read": "true",
-          ".write": "auth != null && (auth.token.tenantId == $tenantId || auth.token.isSuperAdmin == true)"
+          ".write": "auth != null && auth.token.tenantId == $tenantId"
         },
 
-        // Devices configuration (never readable by clients; functions use Admin SDK)
+        "secure_links": {
+          "$linkId": {
+            ".read": "true",
+            ".write": "(auth != null && auth.token.tenantId == $tenantId) || (data.exists() && newData.exists() && newData.child('id').val() == data.child('id').val() && newData.child('created').val() == data.child('created').val() && newData.child('expiration').val() == data.child('expiration').val() && newData.child('maxUsage').val() == data.child('maxUsage').val() && newData.child('expirationHours').val() == data.child('expirationHours').val() && newData.child('customCode').val() == data.child('customCode').val() && newData.child('hash').val() == data.child('hash').val() && newData.child('usedCount').isNumber() && newData.child('usedCount').val() >= data.child('usedCount').val() && newData.child('usedCount').val() <= data.child('maxUsage').val() && ((data.child('status').val() == 'active' && (newData.child('status').val() == 'active' || newData.child('status').val() == 'used')) || (data.child('status').val() == 'used' && newData.child('status').val() == 'used')))"
+          }
+        },
+
+       
         "devices": {
           ".read": false,
-          ".write": "auth != null && auth.token.isSuperAdmin == true"
+          ".write": false
         }
       }
     }
   }
 }
-
